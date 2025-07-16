@@ -1,0 +1,36 @@
+# Changes here will be overwritten by Copier
+SelectCitation:
+- AddCitationFile_flag
+- AddCFFConvert_flag
+SelectCodeQualityFeatures:
+- AddLocalTests_flag
+- SelectGitHubActions_flag
+- AddLinting_flag
+- AddSonarCloud_flag
+- AddEditorConfig_flag
+SelectCommunityFeatures:
+- AddCodeConduct_flag
+- AddContributing_flag
+SelectDocumentationFeatures:
+- AddLocalDocumentation_flag
+- AddOnlineDocumentation_flag
+- AddDevDoc_flag
+- AddGitHubActionDocumentation_flag
+SelectGitHubActions:
+- AddGitHubActionBuild_flag
+SelectPublishReleaseFeatures:
+- SelectCitation_flag
+- AddZenodo_flag
+_commit: 0.6.1
+_src_path: https://github.com/nlesc/python-template.git
+code_of_conduct_email: m.grootes@esciencecenter.nl
+copyright_holder: Netherlands eScience Center
+email: m.grootes@esciencecenter.nl
+full_name: Meiert W. Grootes
+github_organization: IceGraphs
+keywords: icesheet, graph neural network, mesh based simulation
+license: Apachev2
+package_name: icemesh
+package_short_description: Meshgraphnet based icesheet modelling
+template_profile: recommended
+version: 0.0.1

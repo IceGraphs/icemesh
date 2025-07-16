@@ -1,0 +1,16 @@
+# YAML 1.2
+---
+cff-version: "1.2.0"
+title: "icemesh"
+authors:
+  - family-names: Grootes
+    given-names: Meiert
+    orcid: "https://orcid.org/0000-0000-0000-0000"
+date-released: 2025-07-16
+version: "0.0.1"
+repository-code: "https://github.com/IceGraphs/icemesh"
+keywords:
+  - "icesheet"
+  - " graph neural network"
+  - " mesh based simulation"
+message: "If you use this software, please cite it using these metadata."
