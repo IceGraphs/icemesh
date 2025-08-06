@@ -39,7 +39,7 @@ jobs:
       - name: Run unit tests
         run: python -m pytest -v
       - name: Verify that we can build the package
-        run: python -m build
+        run: python -m build --no-isolation
   lint:
     name: Linting build
     runs-on: ubuntu-latest
