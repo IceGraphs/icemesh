@@ -1,0 +1,47 @@
+site_name: Icemesh Documentation
+repo_url: https://github.com/IceGraphs/icemesh
+repo_name: Icemesh
+nav:
+  - Home: index.md
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.footer
+  palette:
+    # Palette toggle for light mode
+    - scheme: default
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to dark mode
+      primary: deep-blue
+      accent: blue
+
+    # Palette toggle for dark mode
+    - scheme: slate
+      toggle:
+        icon: material/weather-night
+        name: Switch to light mode
+      primary: blue
+      accent: grey
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [..]
+          options:
+            show_source: false
+            group_by_category: false
+            relative_crossrefs: true
+  - mkdocs-jupyter:
+      execute: false
+      ignore_h1_titles: true
+      include_source: true
+extra:
+  version:
+    provider: mike
+extra_css:
+  - stylesheets/extra.css

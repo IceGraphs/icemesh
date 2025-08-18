@@ -47,17 +47,13 @@ dev = [
     "pytest",
     "pytest-cov",
     "ruff",
-    "sphinx",
-    "sphinx_rtd_theme",
-    "sphinx-autoapi",
-    "tox",
-    "myst_parser",
 ]
 docs = [
-    "sphinx",
-    "sphinx_rtd_theme",
-    "sphinx-autoapi",
-    "myst_parser",
+    "mkdocs",
+    "mkdocstrings[python]",
+    "mkdocs-material",
+    "mkdocs-gen-files",
+    "mkdocs-jupyter",
 ]
 publishing = [
     "build",
