@@ -9,8 +9,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 authors = [
+    {name = "Claire Donnelly", email = "c.donnelly@esciencecenter.nl"},
     {name = "Meiert W. Grootes", email = "m.grootes@esciencecenter.nl"},
-    {name = "Claire Donnelly", email = "c.donnelly@esciencecenter.nl"}
+    {name = "Thijs van Lankveld", email = "t.vanlankveld@esciencecenter.nl"}
 ]
 classifiers = [
     "Development Status :: 2 - Pre-Alpha",
@@ -21,16 +22,14 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
 ]
-dependencies = ["tensorflow",
-                "torch",
-                "pandas",
-                "matplotlib",
-                "h5py",
-                "torch-geometric",
-                "torch-scatter",
-                "torch-sparse",
-                "deepsnap@git+https://github.com/snap-stanford/deepsnap"
-                ]
+dependencies = [
+    "ipykernel",
+    "ipywidgets",
+    "h5py",
+    "matplotlib",
+    "pandas",
+    "tensorflow",
+]
 description = "Meshgraphnet based icesheet modelling"
 keywords = ["icesheet"," graph neural network"," mesh based simulation"]
 license = {file = "LICENSE"}

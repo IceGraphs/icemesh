@@ -4,6 +4,13 @@ If you're looking for user documentation, go [here](README.md).
 
 ## Development install
 
+This package requires very specific dependency version, collected from specific locations.
+Specifically, torch 2.8.0+x and torch-scatter 2.1.2+pt28x
+Unfortunately, this precludes directly using one of the convenient package management systems.
+For example, we cannot directly use pip or conda to install all dependencies.
+Instead, we provide a bash script to make installation more convenient.
+
+
 ```shell
 # Create a virtual environment, e.g. with
 python -m venv env
@@ -13,6 +20,9 @@ source env/bin/activate
 
 # make sure to have a recent version of pip and setuptools
 python -m pip install --upgrade pip setuptools
+
+# install the specific dependencies.
+./install.sh cpu  #CUDA options: cu126, cu128, cu129
 
 # (from the project root directory)
 # install icemesh as an editable package

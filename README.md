@@ -27,7 +27,8 @@ To install icemesh from GitHub repository, do:
 ```console
 git clone git@github.com:IceGraphs/icemesh.git
 cd icemesh
-python -m pip install .
+./install.sh cpu  #CUDA options: cu126, cu128, cu129
+python -m pip install .[pyg]
 ```
 
 ## Documentation
