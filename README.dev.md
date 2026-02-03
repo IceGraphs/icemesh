@@ -8,7 +8,11 @@ This package requires very specific dependency version, collected from specific 
 Specifically, torch 2.8.0+x and torch-scatter 2.1.2+pt28x
 Unfortunately, this precludes directly using one of the convenient package management systems.
 For example, we cannot directly use pip or conda to install all dependencies.
-Instead, we provide a bash script to make installation more convenient.
+Instead, we provide a bash script `install_torch.sh` to make installation more convenient.
+
+
+Note that `install_torch.sh` installs the required versions of torch etc.
+It should be preceded by installing python 3.10 and followed by installing any other dependencies, e.g. `pip install -e .[dev]`.
 
 
 ```shell
@@ -21,16 +25,16 @@ source env/bin/activate
 # make sure to have a recent version of pip and setuptools
 python -m pip install --upgrade pip setuptools
 
-# install the specific dependencies.
-./install.sh cpu  #CUDA options: cu126, cu128, cu129
+# install the specific torch dependencies.
+./install_torch.sh cpu  #CUDA options: cu126, cu128, cu129
 
 # (from the project root directory)
 # install icemesh as an editable package
-python -m pip install --no-cache-dir --editable .
+python -m pip install --no-cache-dir --editable .[pyg]
 # install development dependencies
-python -m pip install --no-cache-dir --editable .[dev]
+python -m pip install --no-cache-dir --editable .[pyg,dev]
 # install documentation dependencies only
-python -m pip install --no-cache-dir --editable .[docs]
+python -m pip install --no-cache-dir --editable .[pyg,docs]
 ```
 
 Afterwards check that the install directory is present in the `PATH` environment variable.
