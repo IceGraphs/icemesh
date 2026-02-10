@@ -27,10 +27,11 @@ To install icemesh from GitHub repository, do:
 ```console
 git clone git@github.com:IceGraphs/icemesh.git
 cd icemesh
+./install_wavi.sh  # Note that this installs Julia, which must be done outside a conda environment.
 conda create -n icemesh
 conda activate icemesh
 conda install python=3.10 ipykernel ipywidgets
-./install_torch.sh cpu  #CUDA options: cu126, cu128, cu129
+./install_torch.sh cpu   # May replace 'cpu' by CUDA option: 'cu126', 'cu128', 'cu129'
 python -m pip install .[titus,dev]
 ```
 

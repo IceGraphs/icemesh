@@ -10,6 +10,12 @@ Unfortunately, this precludes directly using one of the convenient package manag
 For example, we cannot directly use pip or conda to install all dependencies.
 Instead, we provide a bash script `install_torch.sh` to make installation more convenient.
 
+First install Julia and Julia dependencies.
+
+```shell
+# Note that this must be done outside a conda environment.
+./install_wavi.sh
+```
 
 Note that `install_torch.sh` installs the required versions of torch etc.
 It should be preceded by installing python 3.10 and followed by installing any other dependencies, e.g. `pip install -e .[dev]`.
