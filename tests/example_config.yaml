@@ -1,0 +1,4 @@
+data:
+  root_dir: /storage/IceGraphs/data/IceGraph
+model:
+  k: 0

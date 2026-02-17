@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
     "ipykernel",
     "ipywidgets",
+    "pyyaml",
 ]
 description = "Meshgraphnet based icesheet modelling"
 keywords = ["icesheet"," graph neural network"," mesh based simulation"]
