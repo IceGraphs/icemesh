@@ -29,5 +29,5 @@ def config_file(tmp_path, config_parameters):
 def test_from_yaml(config_file):
     """Test Config.from_yaml."""
     config = Config.from_yaml(config_file)
-    assert config.data["root_dir"] == "."
-    assert config.model["k"] == 3
+    assert config.data.root_dir == "."
+    assert config.model.k == 3
