@@ -3,33 +3,31 @@ Configuration parameters for icemesh.
 """
 
 from pathlib import Path
+from pydantic import BaseModel
 import yaml
 
-class BaseConfig:
-    """Base class for configuration parameters."""
+class DataConfig(BaseModel):
+    root_dir: Path                  = "."    # All other data paths are relative to this root directory.
+    wavi_outputs_subdir: Path       = "WAVI_simulations/outputs"
+    wavi_checkpoints_subdir: Path   = "WAVI_simulations/checkpoints"
+    mesh_subdir: Path               = "preprocessed_datasets"
+    mesh_filename: Path             = "8km_1param_perturb_SMB.pt"
 
-    def __init__(self, **config_dict):
-        self.__dict__.update(config_dict)
-
-class DataConfig(BaseConfig):
-    root_dir: Path = "."
-
-class ModelConfig(BaseConfig):
-    k: int = 0
+class ModelConfig(BaseModel):
+    delta_time: float               = 1.0     # Time delta between files.   'dt' in orig notebooks.
+    history_size: int               = 0       # Additional timesteps besides current to include in input.   'k' in orig notebooks.
     
-class Config:
+class Config(BaseModel):
     """Class for icemesh configuration parameters."""
-    data: DataConfig
-    model: ModelConfig
+    data: DataConfig = DataConfig()
+    model: ModelConfig = ModelConfig()
     
     @classmethod
     def from_dict(cls, config_dict):
         """Read configs from a dict."""
         if not isinstance(config_dict, dict):
             raise TypeError("Input must be a dictionary.")
-        cls.data = DataConfig(**config_dict["data"])
-        cls.model = ModelConfig(**config_dict["model"])
-        return cls
+        return cls(**config_dict)
 
     @classmethod
     def from_yaml(cls, config_file: str):
@@ -46,4 +44,4 @@ class Config:
                 config_dict = yaml.safe_load(f)
             except yaml.YAMLError as exception:
                 raise SyntaxError(f"Error parsing config file {config_file}.") from exception
-        return cls.from_dict(config_dict)
+        return cls(**config_dict)
