@@ -1,9 +1,0 @@
-data:
-  root_dir: /storage/IceGraphs/data/IceGraph
-  wavi_outputs_subdir: WAVI_simulations/8km_1param_perturb/1 simulation/outputs
-  wavi_checkpoints_subdir: WAVI_simulations/8km_1param_perturb/1 simulation/checkpoints
-  mesh_subdir: preprocessed_datasets_py
-  mesh_filename: 8km_1param_perturb_SMB.pt
-model:
-  delta_time: 1.0
-  history_size: 9

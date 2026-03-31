@@ -10,8 +10,9 @@ class DataConfig(BaseModel):
     root_dir: Path                  = "."    # All other data paths are relative to this root directory.
     wavi_outputs_subdir: Path       = "WAVI_simulations/outputs"
     wavi_checkpoints_subdir: Path   = "WAVI_simulations/checkpoints"
+    wavi_simulation: str            = ""
     mesh_subdir: Path               = "preprocessed_datasets"
-    mesh_filename: Path             = "8km_1param_perturb_SMB.pt"
+    mesh_filename: str              = ""
 
 class ModelConfig(BaseModel):
     delta_time: float               = 1.0     # Time delta between files.   'dt' in orig notebooks.

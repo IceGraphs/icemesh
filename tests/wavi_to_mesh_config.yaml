@@ -1,0 +1,11 @@
+# Used by wave_to_mesh.py
+data:
+  root_dir: /storage/IceGraphs/data/IceGraph
+  wavi_outputs_subdir: WAVI_simulations/8_km_lhs/training_datasets/outputs
+  wavi_checkpoints_subdir: WAVI_simulations/8_km_lhs/training_datasets/checkpoints
+  wavi_simulation: rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001
+  mesh_subdir: preprocessed_datasets_py
+  mesh_filename: rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.pt
+model:
+  delta_time: 1.0
+  history_size: 0
