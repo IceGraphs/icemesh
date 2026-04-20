@@ -3,9 +3,12 @@ data:
   root_dir: /storage/IceGraphs/data/IceGraph
   wavi_outputs_subdir: WAVI_simulations/8_km_lhs/training_datasets/outputs
   wavi_checkpoints_subdir: WAVI_simulations/8_km_lhs/training_datasets/checkpoints
-  wavi_simulation: rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001
-  mesh_subdir: preprocessed_datasets_py
-  mesh_filename: rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.pt
+  mesh_subdir: preprocessed_datasets_test
 model:
   delta_time: 1.0
   history_size: 0
+  use_node_types: False
+  num_node_types: 3
+  node_type_interior: 0
+  node_type_left_no_slip: 1
+  node_type_free_slip: 2
