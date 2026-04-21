@@ -14,12 +14,15 @@ class DataConfig(BaseModel):
 
 class ModelConfig(BaseModel):
     delta_time: float = 1.0  # Time delta between files used for finite-difference targets.   #TODO(tvl) rem Note: 'dt' in orig notebooks.
-    history_size: int = 0  # Additional timesteps besides current to include in input.   #TODO(tvl) rem Note: 'k' in original notebooks.
-    use_node_types: bool = False # If True, compute and return one-hot node-type encodings.
+    history_size: int = (
+        0  # Additional timesteps besides current to include in input.   #TODO(tvl) rem Note: 'k' in original notebooks.
+    )
+    use_node_types: bool = False  # If True, compute and return one-hot node-type encodings.
     num_node_types: int = 3
     node_type_interior: int = 0
     node_type_left_no_slip: int = 1
     node_type_free_slip: int = 2
+
 
 class Config(BaseModel):
     """Class for icemesh configuration parameters."""
