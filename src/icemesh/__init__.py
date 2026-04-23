@@ -1,15 +1,13 @@
 """Documentation about icemesh."""
 
 import logging
-from icemesh.config import Config
+from icemesh.config import Config #, DataConfig, ModelConfig
+from icemesh.wavi_to_mesh import wavi_to_mesh, read_pt_file
 
-# from icemesh.wavi_to_mesh import transform_single_grid_to_mesh
-
-__all__ = ["Config"]
-# __all__ = ['Config', 'transform_single_grid_to_mesh']
+__all__ = ['Config', 'wavi_to_mesh', 'read_pt_file']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
 __author__ = "Team Atlas"
-__email__ = "m.grootes@esciencecenter.nl"
+__email__ = "t.vanlankveld@esciencecenter.nl"
 __version__ = "0.0.1"

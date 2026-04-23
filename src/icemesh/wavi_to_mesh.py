@@ -1,12 +1,7 @@
 """Methods for converting WAVI spinup (grid) datasets to torch mesh datasets."""
 
-# TODO rem tmp imports
-import copy
-import subprocess
-
 
 from pathlib import Path
-# import h5py
 import numpy as np
 import torch
 import torch.nn.functional as F
@@ -19,7 +14,7 @@ import xarray as xr
 from icemesh.config import *
 
 
-def grid_to_mesh(
+def _grid_to_mesh(
     model_config: ModelConfig,
     ds: xr.Dataset,
 ):
@@ -75,7 +70,7 @@ def grid_to_mesh(
     )
 
 
-def triangles_to_edges(triangles: torch.Tensor) -> torch.Tensor:
+def _triangles_to_edges(triangles: torch.Tensor) -> torch.Tensor:
     """Converts a list of triangles (Simplex) into a list of unique undirected edges
     (Graph Connectivity).
 
@@ -112,7 +107,7 @@ def triangles_to_edges(triangles: torch.Tensor) -> torch.Tensor:
     return edge_index
 
 
-def build_bundled_dataset(
+def _build_bundled_dataset(
     model_config: ModelConfig,
     simulation_dir: Path,
 ):
@@ -156,11 +151,11 @@ def build_bundled_dataset(
                 points, triangles,
                 velocity, velocity_surface, velocity_bed,
                 node_type_oh
-            ) = grid_to_mesh(model_config, ds)
+            ) = _grid_to_mesh(model_config, ds)
 
             # Build graph connectivity
             cells = triangles.long()
-            edge_index = triangles_to_edges(triangles)
+            edge_index = _triangles_to_edges(triangles)
 
             # Feature assembly
             # Stack all node features into a single matrix X of shape [Num_Nodes, Num_Features]
@@ -313,21 +308,12 @@ def wavi_to_mesh(
         if output_path.exists():
             continue
 
-        bundled_dataset = build_bundled_dataset(
+        bundled_dataset = _build_bundled_dataset(
             model_config=config.model,
             simulation_dir=simulation_dir,
         )
 
         torch.save(bundled_dataset, output_path)
-
-
-# TODO(tvl) rem: temporary placeholders.
-def one_simulation(config: Config, wavi_simulation: str):
-    wavi_to_mesh(config=config, wavi_simulation=wavi_simulation)
-
-
-def multi_simulation(config: Config):
-    wavi_to_mesh(config=config)
 
 
 def read_pt_file(config: Config, mesh_filename: str):
@@ -342,34 +328,3 @@ def read_pt_file(config: Config, mesh_filename: str):
     print(f"Loaded {len(loaded_dataset)} samples.")
     print("First sample:")
     print(loaded_dataset[0])
-
-
-# TODO(tvl) remove: testing...
-if __name__ == "__main__":
-    print("exec main")
-    config = Config.from_yaml("tests/wavi_to_mesh_config.yaml")
-
-    config_single = copy.deepcopy(config)
-    config_single.model.use_node_types = True
-    os_filename = (
-        "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001_incl_node_enc.pt"
-        if config_single.model.use_node_types
-        else "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.pt"
-    )
-    os_out = config.data.root_dir / config.data.mesh_subdir / os_filename
-    if os_out.exists():
-        os_out.unlink()
-
-    one_simulation(config_single, "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001")
-    # transform_single_grid_to_mesh(config) <- TODO(tvl) rename function to something like this...
-    if False:
-        multi_simulation(config)
-    if False:
-        read_pt_file(config, "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.pt")
-
-    process = [
-        "./compare.sh",
-        config.data.root_dir / "preprocessed_datasets_test",
-        config.data.root_dir / "preprocessed_datasets",
-    ]
-    subprocess.run(process)
