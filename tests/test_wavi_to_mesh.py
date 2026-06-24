@@ -1,19 +1,20 @@
 """A test file for wavi_to_mesh.py."""
 
-from pathlib import Path
 import pytest
-import yaml
-from icemesh.config import Config
-from icemesh.wavi_to_mesh import wavi_to_mesh, read_pt_file
-
-# TODO rem tmp imports
-#import copy
 import subprocess
+from icemesh import Config, wavi_to_mesh, read_pt_file
+from pathlib import Path
 
 
 @pytest.fixture
 def config():
     return Config.from_yaml("tests/wavi_to_mesh_config.yaml")
+
+
+def compare_output(test_path: Path, gt_path: Path) -> int:
+    command = ["./tests/compare.sh", test_path, gt_path]
+    process = subprocess.run(command, capture_output=True)
+    return process.returncode
 
 
 def test_one_simulation(config):
@@ -36,9 +37,8 @@ def test_one_simulation(config):
     assert mesh_gt_path.stat().st_size > 0
 
     # Compare the output to ground truth data.
-    command = ["./tests/compare.sh", mesh_path, mesh_gt_path]
-    process = subprocess.run(command, capture_output=True)
-    assert process.returncode == 0
+    returncode = compare_output(test_path=mesh_path, gt_path=mesh_gt_path)
+    assert returncode == 0
 
 
 def test_one_simulation_node_types(config):
@@ -63,9 +63,8 @@ def test_one_simulation_node_types(config):
     assert mesh_gt_path.stat().st_size > 0
 
     # Compare the output to ground truth data.
-    command = ["./tests/compare.sh", mesh_path, mesh_gt_path]
-    process = subprocess.run(command, capture_output=True)
-    assert process.returncode == 0
+    returncode = compare_output(test_path=mesh_path, gt_path=mesh_gt_path)
+    assert returncode == 0
 
 
 def test_multi_simulation(config):
@@ -86,9 +85,8 @@ def test_multi_simulation(config):
     assert mesh_gt_dir.exists()
 
     # Compare the output to ground truth data.
-    command = ["./tests/compare.sh", mesh_dir, mesh_gt_dir]
-    process = subprocess.run(command, capture_output=True)
-    assert process.returncode == 0
+    returncode = compare_output(test_path=mesh_dir, gt_path=mesh_gt_dir)
+    assert returncode == 0
 
 
 def test_read_pt_file(config):
@@ -98,4 +96,3 @@ def test_read_pt_file(config):
     mesh_path = config.data.root_dir / config.data.mesh_subdir / mesh_filename
     
     read_pt_file(config, mesh_path)
-    
