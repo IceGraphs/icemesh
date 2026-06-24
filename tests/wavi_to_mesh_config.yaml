@@ -1,9 +1,10 @@
-# Used by wave_to_mesh.py
+# Used by test_wavi_to_mesh.py
 data:
   root_dir: /storage/IceGraphs/data/IceGraph
-  wavi_outputs_subdir: WAVI_simulations/8_km_lhs/training_datasets/outputs
+  wavi_outputs_subdir: WAVI_simulations/8_km_lhs/training_datasets/tests
   wavi_checkpoints_subdir: WAVI_simulations/8_km_lhs/training_datasets/checkpoints
   mesh_subdir: preprocessed_datasets_test
+  mesh_gt_subdir: preprocessed_datasets
 model:
   delta_time: 1.0
   history_size: 0

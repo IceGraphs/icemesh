@@ -10,6 +10,7 @@ class DataConfig(BaseModel):
     wavi_outputs_subdir: Path = "WAVI_simulations/outputs"
     wavi_checkpoints_subdir: Path = "WAVI_simulations/checkpoints"
     mesh_subdir: Path = "preprocessed_datasets"
+    mesh_gt_subdir: Path = "preprocessed_datasets"
 
 
 class ModelConfig(BaseModel):
