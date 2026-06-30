@@ -166,7 +166,7 @@ def _build_bundled_dataset(
             ]
 
             # Order the variables to add to the feature tensors (for comparison with existing code).
-            # TODO(tvl) replace by iterating over all da variables.
+            # TODO(tvl) replace by iterating over all da variables (?)
             vars = [
                 "h", "b", "s",
                 "dhdt", "accumulation",

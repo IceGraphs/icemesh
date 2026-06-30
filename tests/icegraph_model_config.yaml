@@ -1,0 +1,15 @@
+# Used by test_wavi_to_mesh.py
+data:
+  root_dir: /storage/IceGraphs/data/IceGraph
+  wavi_outputs_subdir: WAVI_simulations/8_km_lhs/training_datasets/tests
+  wavi_checkpoints_subdir: WAVI_simulations/8_km_lhs/training_datasets/checkpoints
+  mesh_subdir: preprocessed_datasets_test
+  mesh_gt_subdir: preprocessed_datasets
+model:
+  delta_time: 1.0
+  history_size: 0
+  use_node_types: False
+  num_node_types: 3
+  node_type_interior: 0
+  node_type_left_no_slip: 1
+  node_type_free_slip: 2
