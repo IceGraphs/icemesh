@@ -40,8 +40,8 @@ fi
 # For directories, path2 may contain files that don't exist in path1,
 # but all files that exist in path1 must exist and be the same in path2.
 echo "Comparing ${path1} to ${path2}..."
-out=$(diff ${path1} ${path2} | grep -v "Only in ${path2}:")
-echo ${out}
+out=$(diff -r ${path1} ${path2} | grep -v "Only in ${path2}:")
+echo "${out}"
 echo "DONE"
 
 if [ -z "${out}" ]; then exit 0; else exit 1; fi
