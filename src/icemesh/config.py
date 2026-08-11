@@ -4,10 +4,9 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
-
 class DataConfig(BaseModel):
     root_dir: Path = "."  # All other data paths are relative to this root directory.
-    wavi_outputs_subdir: Path = "WAVI_simulations/outputs"
+    wavi_trajectories_subdir: Path = "WAVI_simulations/trajectories"
     wavi_checkpoints_subdir: Path = "WAVI_simulations/checkpoints"
     mesh_subdir: Path = "preprocessed_datasets"
     mesh_gt_subdir: Path = "preprocessed_datasets"
@@ -18,11 +17,19 @@ class ModelConfig(BaseModel):
     history_size: int = (
         0  # Additional timesteps besides current to include in input.   #TODO(tvl) rem Note: 'k' in original notebooks.
     )
-    use_node_types: bool = False  # If True, compute and return one-hot node-type encodings.
+    future_size: int = 0
+    use_node_types: bool = False
     num_node_types: int = 3
     node_type_interior: int = 0
-    node_type_left_no_slip: int = 1
-    node_type_free_slip: int = 2
+    node_type_free_slip: int = 1
+    node_type_left_no_slip: int = 2
+    selected_features_x: list = []
+    minimum_thickness: float = 50.0
+    delaunay_edge_factor: float = 1.5
+    file_prefix: str = ""
+    coordinate_units: str = "m"
+    time_units: str = "years"
+    overwrite: bool = False
 
 
 class Config(BaseModel):

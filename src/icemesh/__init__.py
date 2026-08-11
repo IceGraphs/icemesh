@@ -2,9 +2,9 @@
 
 import logging
 from icemesh.config import Config #, DataConfig, ModelConfig
-from icemesh.wavi_to_mesh import wavi_to_mesh, read_pt_file
+from icemesh.wavi_to_mesh import wavi_to_mesh, read_netcdf_file
 
-__all__ = ['Config', 'wavi_to_mesh', 'read_pt_file']
+__all__ = ['Config', 'wavi_to_mesh', 'read_netcdf_file']
 
 logging.getLogger(__name__).addHandler(logging.NullHandler())
 
