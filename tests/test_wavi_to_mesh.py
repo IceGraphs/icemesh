@@ -2,7 +2,7 @@
 
 import pytest
 import subprocess
-from icemesh import Config, wavi_to_mesh, read_pt_file
+from icemesh import Config, read_netcdf_file, wavi_to_mesh
 from pathlib import Path
 
 
@@ -89,10 +89,10 @@ def test_multi_simulation(config):
     assert returncode == 0
 
 
-def test_read_pt_file(config):
+def test_read_netcdf_file(config):
     """Converting one simulation from WAVI to mesh."""
     
-    mesh_filename = "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.pt"
+    mesh_filename = "rw_lhs_from_SMB0.29_gT3.12e-03__T100_traj001.nc"
     mesh_path = config.data.root_dir / config.data.mesh_subdir / mesh_filename
     
-    read_pt_file(config, mesh_path)
+    read_netcdf_file(config, mesh_path)
