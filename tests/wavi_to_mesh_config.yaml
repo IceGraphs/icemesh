@@ -11,7 +11,7 @@ data:
   # Directory containing WAVI checkpoint files
   wavi_checkpoints_subdir: WAVI_simulations/8km_simulations/training_datasets/checkpoints
 
-  # Directory where processed test trajectories are saved
+  # Directory where processed trajectories are saved
   mesh_subdir: preprocessed_datasets_test
 
   # Directory containing the reference processed datasets
@@ -23,7 +23,7 @@ model:
   delta_time: 1.0
 
   # Previous input timesteps included in addition to the current timestep
-  # A value of 1 produces input timesteps [t-1, t]
+  # A value of 2 produces input timesteps [t-2, t-1, t]
   history_size: 2
 
   # Future states and forcing timesteps stored for rollout training
@@ -32,7 +32,7 @@ model:
 
 
   # Add physical node-type encodings and the reconstructed mesh boundary
-  use_node_types: true
+  use_node_types: false
 
   # Number of mutually exclusive physical node types
   # The mesh boundary remains a separate binary feature
@@ -77,4 +77,4 @@ model:
   time_units: years
 
   # Replace existing trajectory files when true, otherwise skip them
-  overwrite: false
+  overwrite: true
