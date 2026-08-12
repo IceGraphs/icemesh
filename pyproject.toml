@@ -28,7 +28,8 @@ dependencies = [
     "pyyaml",
     "scipy",
     "xarray",
-    "h5py"
+    "h5py",
+    "torch-geometric",
 ]
 description = "Meshgraphnet based icesheet modelling"
 keywords = ["icesheet"," graph neural network"," mesh based simulation"]
