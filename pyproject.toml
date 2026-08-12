@@ -23,6 +23,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 dependencies = [
+    "xarray",
     "h5py",
     "ipykernel",
     "ipywidgets",
