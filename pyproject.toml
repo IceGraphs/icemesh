@@ -23,11 +23,12 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
 ]
 dependencies = [
-    "xarray",
-    "h5py",
     "ipykernel",
     "ipywidgets",
     "pyyaml",
+    "scipy",
+    "xarray",
+    "h5py"
 ]
 description = "Meshgraphnet based icesheet modelling"
 keywords = ["icesheet"," graph neural network"," mesh based simulation"]
