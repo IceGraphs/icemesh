@@ -578,9 +578,13 @@ def _build_bundled_dataset(
     use_node_types = bool(
         _setting(model_config, "use_node_types", default=False)
     )
+    use_thickness_filter = bool(
+        _setting(model_config, "use_thickness_filter", default=True)
+    )
     minimum_thickness = float(
         _setting(model_config, "minimum_thickness", default=50.0)
     )
+    filter_thickness = minimum_thickness if use_thickness_filter else None
     delaunay_edge_factor = float(
         _setting(model_config, "delaunay_edge_factor", default=1.5)
     )
@@ -684,7 +688,7 @@ def _build_bundled_dataset(
 
     remove_mask, first_hit_timestep = find_nodes_reaching_thickness_value(
         all_feature_snapshots,
-        minimum_thickness,
+        filter_thickness,
     )
     keep_indices = torch.nonzero(~remove_mask, as_tuple=False).flatten()
     removed_indices = torch.nonzero(remove_mask, as_tuple=False).flatten()
@@ -735,7 +739,8 @@ def _build_bundled_dataset(
             for index in removed_node_indices
         },
         "minimum_original_thickness": minimum_original_thickness,
-        "minimum_thickness": minimum_thickness,
+        "use_thickness_filter": use_thickness_filter,
+        "minimum_thickness": filter_thickness,
         "estimated_mesh_spacing": mesh_spacing,
         "delaunay_edge_factor": delaunay_edge_factor,
         "maximum_edge_length": maximum_edge_length,
@@ -750,7 +755,10 @@ def _build_bundled_dataset(
             f"\nMinimum original ice thickness: "
             f"{minimum_original_thickness:.6g}"
         )
-        print(f"Configured filtering thickness: {minimum_thickness:g}")
+        if use_thickness_filter:
+            print(f"Configured filtering thickness: {minimum_thickness:g}")
+        else:
+            print("Thickness filtering: disabled")
         print(
             f"Nodes: {n_original_nodes} to {n_kept_nodes}; "
             f"{n_removed_nodes} removed "
