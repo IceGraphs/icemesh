@@ -55,7 +55,7 @@ def test_one_simulation(config: Config, wavi_simulation: str) -> None:
     """Convert and validate one simulation without node-type features."""
     config.model.use_node_types = False
 
-    # Clean up existing output.    
+    # Clean up existing output.
     delete_output(config, wavi_simulation)
 
     output_paths = wavi_to_mesh(config, wavi_simulation)
@@ -63,11 +63,7 @@ def test_one_simulation(config: Config, wavi_simulation: str) -> None:
 
     # Compare the generated file to the reference file with the same name.
     mesh_path = output_paths[0]
-    mesh_gt_path = (
-        config.data.root_dir
-        / config.data.mesh_gt_subdir
-        / mesh_path.name
-    )
+    mesh_gt_path = config.data.root_dir / config.data.mesh_gt_subdir / mesh_path.name
     compare_output(mesh_path, mesh_gt_path)
 
 
@@ -75,7 +71,7 @@ def test_one_simulation_node_types(config: Config, wavi_simulation: str) -> None
     """Convert and validate one simulation with node-type features."""
     config.model.use_node_types = True
 
-    # Clean up existing output.    
+    # Clean up existing output.
     delete_output(config, wavi_simulation)
 
     # Use a separate filename to avoid overwriting the output without node types.
@@ -86,18 +82,14 @@ def test_one_simulation_node_types(config: Config, wavi_simulation: str) -> None
 
     # Compare the generated file to the reference file with the same name.
     mesh_path = output_paths[0]
-    mesh_gt_path = (
-        config.data.root_dir
-        / config.data.mesh_gt_subdir
-        / mesh_path.name
-    )
+    mesh_gt_path = config.data.root_dir / config.data.mesh_gt_subdir / mesh_path.name
     compare_output(mesh_path, mesh_gt_path)
 
 
 def test_multi_simulation(config: Config) -> None:
     """Convert all available simulations and validate their outputs."""
 
-    # Clean up existing output.    
+    # Clean up existing output.
     delete_output(config)
 
     output_paths = wavi_to_mesh(config)
@@ -106,11 +98,7 @@ def test_multi_simulation(config: Config) -> None:
 
     # Compare every generated dataset with the corresponding reference dataset.
     for mesh_path in output_paths:
-        mesh_gt_path = (
-            config.data.root_dir
-            / config.data.mesh_gt_subdir
-            / mesh_path.name
-        )
+        mesh_gt_path = config.data.root_dir / config.data.mesh_gt_subdir / mesh_path.name
         compare_output(mesh_path, mesh_gt_path)
 
 
