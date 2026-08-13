@@ -34,7 +34,7 @@ from scipy.spatial import Delaunay, QhullError, cKDTree
 from torch_geometric.data import Data
 from tqdm import tqdm
 
-from icemesh.config import Config
+from icemesh.config import Config, NetcdfConfig, ModelConfig
 
 
 def _config_section(config: Config, *names: str) -> Any:
@@ -115,7 +115,7 @@ def _validate_selected_features(
     return selected
 
 
-def _print_selected_features(netcdf_config: Any, selected_features_x: Sequence[int]) -> None:
+def _print_selected_features(netcdf_config: NetcdfConfig, selected_features_x: Sequence[int]) -> None:
     """Print input, target and forcing feature conventions for inspection."""
     print("\nSelected input features for x:")
     for new_index, original_index in enumerate(selected_features_x):
@@ -131,7 +131,7 @@ def _print_selected_features(netcdf_config: Any, selected_features_x: Sequence[i
 
 
 def _grid_to_mesh(
-    model_config: Any,
+    model_config: ModelConfig,
     jld2_file: h5py.File,
     dt: float,
 ) -> tuple[np.ndarray, torch.Tensor]:
@@ -239,7 +239,7 @@ def _grid_to_mesh(
 
 
 def _find_nodes_reaching_thickness_value(
-    netcdf_config: Any,
+    netcdf_config: NetcdfConfig,
     all_feature_snapshots: Sequence[torch.Tensor],
     thickness_value: float | None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -398,8 +398,8 @@ def _build_mesh_boundary_feature(face: torch.Tensor, num_nodes: int) -> torch.Te
 
 
 def _build_bundled_dataset(
-    netcdf_config: Any,
-    model_config: Any,
+    netcdf_config: NetcdfConfig,
+    model_config: ModelConfig,
     simulation_dir: Path,
     trajectory_id: str | None = None,
     print_filter_summary: bool = True,
@@ -713,7 +713,7 @@ def _derive_original_node_indices(
 
 
 def _save_bundled_dataset_to_netcdf(
-    netcdf_config: Any,
+    netcdf_config: NetcdfConfig,
     bundled_dataset: Sequence[Data],
     output_path: str | Path,
     selected_features_x: Sequence[int],
@@ -1022,7 +1022,7 @@ def _load_netcdf_as_pyg(
         return bundled_dataset
 
 
-def _output_filename(model_config: Any, simulation: str) -> str:
+def _output_filename(model_config: ModelConfig, simulation: str) -> str:
     """Build a traceable filename from trajectory and temporal settings."""
     prefix = str(_setting(model_config, "file_prefix", default="")).strip("_")
     stem = simulation
@@ -1143,7 +1143,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
 
 
 def determine_automatic_thickness_value(
-    netcdf_config: Any,
+    netcdf_config: NetcdfConfig,
     all_feature_snapshots: Sequence[torch.Tensor],
     maximum_value: float = 100.0,
 ) -> tuple[float, float | None]:
