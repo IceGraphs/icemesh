@@ -867,14 +867,15 @@ def _choose_netcdf_engine() -> str:
     """
     if importlib.util.find_spec("netCDF4") is not None:
         return "netcdf4"
-    if importlib.util.find_spec("h5netcdf") is not None:
+    elif importlib.util.find_spec("h5netcdf") is not None:
         return "h5netcdf"
-    warnings.warn(
-        "Neither netCDF4 nor h5netcdf is installed; falling back to scipy "
-        "NetCDF-3 without compression",
-        RuntimeWarning,
-    )
-    return "scipy"
+    else:
+        warnings.warn(
+            "Neither netCDF4 nor h5netcdf is installed; falling back to scipy "
+            "NetCDF-3 without compression",
+            RuntimeWarning,
+        )
+        return "scipy"
 
 
 def _validate_static_graph_fields(bundled_dataset: Sequence[Data]) -> None:
@@ -1260,7 +1261,8 @@ def load_netcdf_as_pyg(
             metadata.get("selected_feature_names_json", "[]")
         )
         return bundled_dataset, metadata
-    return bundled_dataset
+    else:
+        return bundled_dataset
 
 
 def inspect_netcdf(netcdf_path: str | Path) -> None:
@@ -1443,9 +1445,9 @@ def read_netcdf_file(config: Config, mesh_filename: str):
         print("Selected feature names:")
         print(metadata["selected_feature_names"])
         return loaded_dataset
-
-    loaded_dataset = torch.load(load_path, weights_only=False)
-    print(f"Loaded {len(loaded_dataset)} samples.")
-    print("First sample:")
-    print(loaded_dataset[0])
-    return loaded_dataset
+    else:
+        loaded_dataset = torch.load(load_path, weights_only=False)
+        print(f"Loaded {len(loaded_dataset)} samples.")
+        print("First sample:")
+        print(loaded_dataset[0])
+        return loaded_dataset
