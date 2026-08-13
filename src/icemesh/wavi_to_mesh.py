@@ -6,11 +6,11 @@ that reach the configured minimum thickness, reconstructs one static Delaunay
 mesh and bundles graph samples through time.
 
 Model inputs contain user-selected physical features and optional node
-encodings, with historical context length of choice. Targets always contain 
-one-step derivatives of ``u``, ``v`` and ``h``. Future physical states and 
-prescribed forcing variables (accumulation and basal-melt) fields are retained 
-for rollout supervision. One compressed NetCDF file stores the temporal tensors, 
-static topology, coordinates, feature metadata and filtering diagnostics for 
+encodings, with historical context length of choice. Targets always contain
+one-step derivatives of ``u``, ``v`` and ``h``. Future physical states and
+prescribed forcing variables (accumulation and basal-melt) fields are retained
+for rollout supervision. One compressed NetCDF file stores the temporal tensors,
+static topology, coordinates, feature metadata and filtering diagnostics for
 each trajectory.
 """
 
@@ -126,10 +126,7 @@ def natural_sort_key(path: Path) -> list[Any]:
     Numeric filename fragments are compared as integers, so timestep 10 sorts
     after timestep 9 rather than after timestep 1.
     """
-    return [
-        int(part) if part.isdigit() else part.lower()
-        for part in re.split(r"(\d+)", path.name)
-    ]
+    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]
 
 
 def validate_selected_features(
@@ -159,11 +156,7 @@ def validate_selected_features(
     # Exclude optional node encodings when node types are disabled
     if not use_node_types:
         node_encoding_indices = {29, 30, 31, 32}
-        selected = [
-            index
-            for index in selected
-            if index not in node_encoding_indices
-        ]
+        selected = [index for index in selected if index not in node_encoding_indices]
 
     if not selected:
         raise ValueError("selected_features_x must contain at least one index")
@@ -179,10 +172,7 @@ def validate_selected_features(
     invalid = [index for index in selected if index not in available]
 
     if invalid:
-        raise IndexError(
-            f"Unavailable selected feature indices: {invalid}. "
-            f"Available indices: {sorted(available)}"
-        )
+        raise IndexError(f"Unavailable selected feature indices: {invalid}. Available indices: {sorted(available)}")
 
     return selected
 
@@ -191,24 +181,15 @@ def print_selected_features(selected_features_x: Sequence[int]) -> None:
     """Print input, target and forcing feature conventions for inspection."""
     print("\nSelected input features for x:")
     for new_index, original_index in enumerate(selected_features_x):
-        print(
-            f"  x[{new_index}] = original feature {original_index}: "
-            f"{FEATURE_NAMES[original_index]}"
-        )
+        print(f"  x[{new_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
 
     print("\nFixed targets for y and future_states:")
     for target_index, original_index in enumerate(TARGET_FEATURE_INDICES):
-        print(
-            f"  target[{target_index}] = original feature {original_index}: "
-            f"{FEATURE_NAMES[original_index]}"
-        )
+        print(f"  target[{target_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
 
     print("\nFuture prescribed forcing fields:")
     for forcing_index, original_index in enumerate(FORCING_FEATURE_INDICES):
-        print(
-            f"  forcing[{forcing_index}] = original feature {original_index}: "
-            f"{FEATURE_NAMES[original_index]}"
-        )
+        print(f"  forcing[{forcing_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
 
 
 def _grid_to_mesh(
@@ -245,15 +226,9 @@ def _grid_to_mesh(
     if use_node_types:
         n_rows, n_cols = u.shape
         num_node_types = int(_setting(model_config, "num_node_types", default=3))
-        node_type_interior = int(
-            _setting(model_config, "node_type_interior", default=0)
-        )
-        node_type_free_slip = int(
-            _setting(model_config, "node_type_free_slip", default=1)
-        )
-        node_type_left_no_slip = int(
-            _setting(model_config, "node_type_left_no_slip", default=2)
-        )
+        node_type_interior = int(_setting(model_config, "node_type_interior", default=0))
+        node_type_free_slip = int(_setting(model_config, "node_type_free_slip", default=1))
+        node_type_left_no_slip = int(_setting(model_config, "node_type_left_no_slip", default=2))
 
         node_ids = {
             node_type_interior,
@@ -261,27 +236,18 @@ def _grid_to_mesh(
             node_type_left_no_slip,
         }
         if len(node_ids) != 3 or min(node_ids) < 0 or max(node_ids) >= num_node_types:
-            raise ValueError(
-                "The three node-type identifiers must be distinct values in "
-                f"[0, {num_node_types - 1}]"
-            )
+            raise ValueError(f"The three node-type identifiers must be distinct values in [0, {num_node_types - 1}]")
 
-        node_type_2d = np.full(
-            (n_rows, n_cols), node_type_interior, dtype=np.int64
-        )
+        node_type_2d = np.full((n_rows, n_cols), node_type_interior, dtype=np.int64)
         node_type_2d[0, :] = node_type_free_slip
         node_type_2d[-1, :] = node_type_free_slip
         node_type_2d[:, 0] = node_type_left_no_slip
         node_type = torch.as_tensor(node_type_2d.ravel(), dtype=torch.long)
-        node_type_oh = F.one_hot(
-            node_type, num_classes=num_node_types
-        ).float()
+        node_type_oh = F.one_hot(node_type, num_classes=num_node_types).float()
 
     def vector(first: str, second: str) -> torch.Tensor:
         """Combine two grid fields as one two-component node feature."""
-        values = np.column_stack(
-            [jld2_file[first][:, :].ravel(), jld2_file[second][:, :].ravel()]
-        )
+        values = np.column_stack([jld2_file[first][:, :].ravel(), jld2_file[second][:, :].ravel()])
         return torch.as_tensor(values, dtype=torch.float32)
 
     def column(name: str) -> torch.Tensor:
@@ -297,9 +263,7 @@ def _grid_to_mesh(
             return column(name)
         return torch.zeros((int(np.prod(h_shape)), 1), dtype=torch.float32)
 
-    dt_column = torch.full(
-        (int(np.prod(h_shape)), 1), float(dt), dtype=torch.float32
-    )
+    dt_column = torch.full((int(np.prod(h_shape)), 1), float(dt), dtype=torch.float32)
 
     feature_tensors = [
         vector("u", "v"),
@@ -349,13 +313,10 @@ def determine_automatic_thickness_value(
         raise ValueError("No feature snapshots were provided")
 
     minimum_thickness = min(
-        float(features[:, THICKNESS_FEATURE_INDEX].min().item())
-        for features in all_feature_snapshots
+        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
     )
     use_for_filtering = (
-        np.isfinite(minimum_thickness)
-        and minimum_thickness.is_integer()
-        and minimum_thickness <= maximum_value
+        np.isfinite(minimum_thickness) and minimum_thickness.is_integer() and minimum_thickness <= maximum_value
     )
     return minimum_thickness, minimum_thickness if use_for_filtering else None
 
@@ -383,9 +344,7 @@ def find_nodes_reaching_thickness_value(
         return remove_mask, first_hit_timestep
 
     for timestep, features in enumerate(all_feature_snapshots):
-        hit = (
-            features[:, THICKNESS_FEATURE_INDEX] == thickness_value
-        ).detach().cpu()
+        hit = (features[:, THICKNESS_FEATURE_INDEX] == thickness_value).detach().cpu()
         newly_detected = hit & ~remove_mask
         first_hit_timestep[newly_detected] = timestep
         remove_mask |= hit
@@ -413,10 +372,7 @@ def _triangles_to_edges(triangles: torch.Tensor) -> torch.Tensor:
     directions for message passing. The result has shape ``[2, edges]``.
     """
     if triangles.ndim != 2 or triangles.shape[1] != 3:
-        raise ValueError(
-            "triangles must have shape [num_triangles, 3], received "
-            f"{tuple(triangles.shape)}"
-        )
+        raise ValueError(f"triangles must have shape [num_triangles, 3], received {tuple(triangles.shape)}")
 
     triangle_array = triangles.detach().cpu().numpy()
     undirected = np.concatenate(
@@ -433,14 +389,10 @@ def _triangles_to_edges(triangles: torch.Tensor) -> torch.Tensor:
     return torch.as_tensor(directed.T, dtype=torch.long)
 
 
-def _build_edge_attributes(
-    mesh_pos: torch.Tensor, edge_index: torch.Tensor
-) -> torch.Tensor:
+def _build_edge_attributes(mesh_pos: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
     """Build ``dx``, ``dy`` and distance for every directed graph edge."""
     relative_position = mesh_pos[edge_index[0], :2] - mesh_pos[edge_index[1], :2]
-    edge_distance = torch.linalg.vector_norm(
-        relative_position, dim=1, keepdim=True
-    )
+    edge_distance = torch.linalg.vector_norm(relative_position, dim=1, keepdim=True)
     return torch.cat([relative_position, edge_distance], dim=-1).float()
 
 
@@ -460,16 +412,13 @@ def _build_delaunay_topology(
     positions = kept_mesh_pos[:, :2].detach().cpu().numpy()
     n_nodes = positions.shape[0]
     if n_nodes < 3:
-        raise ValueError(
-            f"Delaunay triangulation needs at least 3 nodes; {n_nodes} remain"
-        )
+        raise ValueError(f"Delaunay triangulation needs at least 3 nodes; {n_nodes} remain")
 
     try:
         triangles = Delaunay(positions).simplices.astype(np.int64)
     except QhullError as exc:
         raise ValueError(
-            "Delaunay remeshing failed; retained coordinates may be collinear "
-            "or geometrically degenerate"
+            "Delaunay remeshing failed; retained coordinates may be collinear or geometrically degenerate"
         ) from exc
 
     p0 = positions[triangles[:, 0]]
@@ -502,9 +451,7 @@ def _build_delaunay_topology(
     return edge_index, edge_attr, face, n_isolated_nodes
 
 
-def _build_mesh_boundary_feature(
-    face: torch.Tensor, num_nodes: int
-) -> torch.Tensor:
+def _build_mesh_boundary_feature(face: torch.Tensor, num_nodes: int) -> torch.Tensor:
     """Identify nodes on the boundary of the reconstructed triangular mesh.
 
     An edge belongs to the mesh boundary when it occurs in exactly one face.
@@ -512,10 +459,7 @@ def _build_mesh_boundary_feature(
     feature channel.
     """
     if face.ndim != 2 or face.shape[0] != 3:
-        raise ValueError(
-            "face must have shape [3, number_of_triangles], received "
-            f"{tuple(face.shape)}"
-        )
+        raise ValueError(f"face must have shape [3, number_of_triangles], received {tuple(face.shape)}")
 
     triangles = face.T.contiguous()
     edges = torch.cat(
@@ -568,34 +512,20 @@ def _build_bundled_dataset(
         source-file diagnostics.
     """
     simulation_dir = Path(simulation_dir)
-    past_steps = int(
-        _setting(model_config, "history_size", "past_steps", default=0)
-    )
-    future_steps = int(
-        _setting(model_config, "future_size", "future_steps", default=0)
-    )
+    past_steps = int(_setting(model_config, "history_size", "past_steps", default=0))
+    future_steps = int(_setting(model_config, "future_size", "future_steps", default=0))
     dt = float(_setting(model_config, "delta_time", "dt", default=1.0))
-    use_node_types = bool(
-        _setting(model_config, "use_node_types", default=False)
-    )
-    use_thickness_filter = bool(
-        _setting(model_config, "use_thickness_filter", default=True)
-    )
-    minimum_thickness = float(
-        _setting(model_config, "minimum_thickness", default=50.0)
-    )
+    use_node_types = bool(_setting(model_config, "use_node_types", default=False))
+    use_thickness_filter = bool(_setting(model_config, "use_thickness_filter", default=True))
+    minimum_thickness = float(_setting(model_config, "minimum_thickness", default=50.0))
     filter_thickness = minimum_thickness if use_thickness_filter else None
-    delaunay_edge_factor = float(
-        _setting(model_config, "delaunay_edge_factor", default=1.5)
-    )
+    delaunay_edge_factor = float(_setting(model_config, "delaunay_edge_factor", default=1.5))
     selected_features_x = _setting(
         model_config,
         "selected_features_x",
         default=DEFAULT_SELECTED_FEATURES,
     )
-    selected_features_x = validate_selected_features(
-        selected_features_x, use_node_types
-    )
+    selected_features_x = validate_selected_features(selected_features_x, use_node_types)
 
     if past_steps < 0 or future_steps < 0:
         raise ValueError("history_size and future_size must be non-negative")
@@ -616,18 +546,11 @@ def _build_bundled_dataset(
         print_selected_features(selected_features_x)
 
     files = sorted(
-        [
-            path
-            for path in simulation_dir.iterdir()
-            if path.is_file()
-            and path.suffix.lower() == ".jld2"
-        ],
+        [path for path in simulation_dir.iterdir() if path.is_file() and path.suffix.lower() == ".jld2"],
         key=natural_sort_key,
     )
     if not files:
-        raise ValueError(
-            f"No .jld2 files found in:\n{simulation_dir}"
-        )
+        raise ValueError(f"No .jld2 files found in:\n{simulation_dir}")
 
     timesteps = len(files)
     minimum_timesteps = past_steps + max(1, future_steps) + 1
@@ -641,9 +564,7 @@ def _build_bundled_dataset(
     all_feature_snapshots: list[torch.Tensor] = []
     reference_mesh_pos: torch.Tensor | None = None
     file_iterator = (
-        tqdm(files, desc=f"Parsing {simulation_dir.name[:25]}", leave=False)
-        if show_timestep_progress
-        else files
+        tqdm(files, desc=f"Parsing {simulation_dir.name[:25]}", leave=False) if show_timestep_progress else files
     )
 
     for timestep, file_path in enumerate(file_iterator):
@@ -667,23 +588,16 @@ def _build_bundled_dataset(
                     f"{tuple(reference_mesh_pos.shape)} to "
                     f"{tuple(mesh_pos_tensor.shape)}"
                 )
-            if not torch.allclose(
-                mesh_pos_tensor, reference_mesh_pos, rtol=0.0, atol=1e-6
-            ):
-                raise ValueError(
-                    f"Node coordinates or ordering changed at timestep {timestep}"
-                )
+            if not torch.allclose(mesh_pos_tensor, reference_mesh_pos, rtol=0.0, atol=1e-6):
+                raise ValueError(f"Node coordinates or ordering changed at timestep {timestep}")
 
         if all_features.shape[0] != reference_mesh_pos.shape[0]:
-            raise ValueError(
-                f"Feature and mesh node counts differ in {file_path.name}"
-            )
+            raise ValueError(f"Feature and mesh node counts differ in {file_path.name}")
         all_feature_snapshots.append(all_features)
 
     assert reference_mesh_pos is not None
     minimum_original_thickness = min(
-        float(features[:, THICKNESS_FEATURE_INDEX].min().item())
-        for features in all_feature_snapshots
+        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
     )
 
     remove_mask, first_hit_timestep = find_nodes_reaching_thickness_value(
@@ -696,26 +610,18 @@ def _build_bundled_dataset(
     n_removed_nodes = int(removed_indices.numel())
     n_kept_nodes = int(keep_indices.numel())
     if n_kept_nodes < 3:
-        raise ValueError(
-            f"Only {n_kept_nodes} nodes remain after filtering; at least 3 are required"
-        )
+        raise ValueError(f"Only {n_kept_nodes} nodes remain after filtering; at least 3 are required")
 
-    filtered_snapshots = [
-        features.index_select(0, keep_indices)
-        for features in all_feature_snapshots
-    ]
+    filtered_snapshots = [features.index_select(0, keep_indices) for features in all_feature_snapshots]
     kept_mesh_pos = reference_mesh_pos.index_select(0, keep_indices)
     mesh_spacing = estimate_mesh_spacing(reference_mesh_pos)
     maximum_edge_length = delaunay_edge_factor * mesh_spacing
-    edge_index, edge_attr, face, n_isolated_nodes = _build_delaunay_topology(
-        kept_mesh_pos, maximum_edge_length
-    )
+    edge_index, edge_attr, face, n_isolated_nodes = _build_delaunay_topology(kept_mesh_pos, maximum_edge_length)
 
     if use_node_types:
         boundary_feature = _build_mesh_boundary_feature(face, n_kept_nodes)
         filtered_snapshots = [
-            torch.cat([features, boundary_feature.to(features)], dim=1)
-            for features in filtered_snapshots
+            torch.cat([features, boundary_feature.to(features)], dim=1) for features in filtered_snapshots
         ]
         n_mesh_boundary_nodes = int(boundary_feature.sum().item())
     else:
@@ -729,15 +635,10 @@ def _build_bundled_dataset(
         "n_original_nodes": n_original_nodes,
         "n_kept_nodes": n_kept_nodes,
         "n_removed_nodes": n_removed_nodes,
-        "percentage_nodes_removed": (
-            100.0 * n_removed_nodes / max(n_original_nodes, 1)
-        ),
+        "percentage_nodes_removed": (100.0 * n_removed_nodes / max(n_original_nodes, 1)),
         "removed_node_indices": removed_node_indices,
         "kept_node_indices": [int(index) for index in keep_indices.tolist()],
-        "first_hit_timestep": {
-            index: int(first_hit_timestep[index].item())
-            for index in removed_node_indices
-        },
+        "first_hit_timestep": {index: int(first_hit_timestep[index].item()) for index in removed_node_indices},
         "minimum_original_thickness": minimum_original_thickness,
         "use_thickness_filter": use_thickness_filter,
         "minimum_thickness": filter_thickness,
@@ -751,10 +652,7 @@ def _build_bundled_dataset(
     }
 
     if print_filter_summary:
-        print(
-            f"\nMinimum original ice thickness: "
-            f"{minimum_original_thickness:.6g}"
-        )
+        print(f"\nMinimum original ice thickness: {minimum_original_thickness:.6g}")
         if use_thickness_filter:
             print(f"Configured filtering thickness: {minimum_thickness:g}")
         else:
@@ -780,38 +678,26 @@ def _build_bundled_dataset(
     for time_index in range(past_steps, timesteps - required_future_steps):
         x = torch.stack(
             [
-                filtered_snapshots[history_index].index_select(
-                    1, selected_tensor
-                )
-                for history_index in range(
-                    time_index - past_steps, time_index + 1
-                )
+                filtered_snapshots[history_index].index_select(1, selected_tensor)
+                for history_index in range(time_index - past_steps, time_index + 1)
             ],
             dim=1,
         ).float()
-        current_state = filtered_snapshots[time_index].index_select(
-            1, target_tensor
-        )
-        next_state = filtered_snapshots[time_index + 1].index_select(
-            1, target_tensor
-        )
+        current_state = filtered_snapshots[time_index].index_select(1, target_tensor)
+        next_state = filtered_snapshots[time_index + 1].index_select(1, target_tensor)
         y = ((next_state - current_state) / dt).float()
 
         if future_steps > 0:
             future_states = torch.stack(
                 [
-                    filtered_snapshots[time_index + offset].index_select(
-                        1, target_tensor
-                    )
+                    filtered_snapshots[time_index + offset].index_select(1, target_tensor)
                     for offset in range(1, future_steps + 1)
                 ],
                 dim=1,
             ).float()
             future_forcings = torch.stack(
                 [
-                    filtered_snapshots[time_index + offset].index_select(
-                        1, forcing_tensor
-                    )
+                    filtered_snapshots[time_index + offset].index_select(1, forcing_tensor)
                     for offset in range(1, future_steps + 1)
                 ],
                 dim=1,
@@ -871,8 +757,7 @@ def _choose_netcdf_engine() -> str:
         return "h5netcdf"
     else:
         warnings.warn(
-            "Neither netCDF4 nor h5netcdf is installed; falling back to scipy "
-            "NetCDF-3 without compression",
+            "Neither netCDF4 nor h5netcdf is installed; falling back to scipy NetCDF-3 without compression",
             RuntimeWarning,
         )
         return "scipy"
@@ -885,13 +770,8 @@ def _validate_static_graph_fields(bundled_dataset: Sequence[Data]) -> None:
         for field_name in ("edge_index", "edge_attr", "mesh_pos", "face"):
             first_value = getattr(first_sample, field_name)
             current_value = getattr(sample, field_name)
-            if first_value.shape != current_value.shape or not torch.equal(
-                first_value, current_value
-            ):
-                raise ValueError(
-                    f"Static graph field '{field_name}' changes at sample "
-                    f"{sample_index}"
-                )
+            if first_value.shape != current_value.shape or not torch.equal(first_value, current_value):
+                raise ValueError(f"Static graph field '{field_name}' changes at sample {sample_index}")
 
 
 def _derive_original_node_indices(
@@ -903,12 +783,8 @@ def _derive_original_node_indices(
         return np.arange(number_of_kept_nodes, dtype=np.int32)
     kept = filter_info.get("kept_node_indices")
     if kept is None:
-        n_original = int(
-            filter_info.get("n_original_nodes", number_of_kept_nodes)
-        )
-        removed = {
-            int(index) for index in filter_info.get("removed_node_indices", [])
-        }
+        n_original = int(filter_info.get("n_original_nodes", number_of_kept_nodes))
+        removed = {int(index) for index in filter_info.get("removed_node_indices", [])}
         kept = [index for index in range(n_original) if index not in removed]
     result = np.asarray(kept, dtype=np.int32)
     if result.shape != (number_of_kept_nodes,):
@@ -963,38 +839,33 @@ def save_bundled_dataset_to_netcdf(
     _validate_static_graph_fields(bundled_dataset)
     first_sample = bundled_dataset[0]
 
-    input_x = torch.stack(
-        [sample.x.detach().cpu() for sample in bundled_dataset]
-    ).numpy().astype(np.float32, copy=False)
-    target_y = torch.stack(
-        [sample.y.detach().cpu() for sample in bundled_dataset]
-    ).numpy().astype(np.float32, copy=False)
-    future_states = torch.stack(
-        [sample.future_states.detach().cpu() for sample in bundled_dataset]
-    ).numpy().astype(np.float32, copy=False)
-    future_forcings = torch.stack(
-        [sample.future_forcings.detach().cpu() for sample in bundled_dataset]
-    ).numpy().astype(np.float32, copy=False)
-    time_index = np.asarray(
-        [int(sample.time_index) for sample in bundled_dataset], dtype=np.int32
+    input_x = (
+        torch.stack([sample.x.detach().cpu() for sample in bundled_dataset]).numpy().astype(np.float32, copy=False)
     )
+    target_y = (
+        torch.stack([sample.y.detach().cpu() for sample in bundled_dataset]).numpy().astype(np.float32, copy=False)
+    )
+    future_states = (
+        torch.stack([sample.future_states.detach().cpu() for sample in bundled_dataset])
+        .numpy()
+        .astype(np.float32, copy=False)
+    )
+    future_forcings = (
+        torch.stack([sample.future_forcings.detach().cpu() for sample in bundled_dataset])
+        .numpy()
+        .astype(np.float32, copy=False)
+    )
+    time_index = np.asarray([int(sample.time_index) for sample in bundled_dataset], dtype=np.int32)
 
     trajectory_ids = {str(sample.trajectory_id) for sample in bundled_dataset}
     if len(trajectory_ids) != 1:
-        raise ValueError(
-            "All samples in one NetCDF file must share one trajectory_id; "
-            f"found {sorted(trajectory_ids)}"
-        )
+        raise ValueError(f"All samples in one NetCDF file must share one trajectory_id; found {sorted(trajectory_ids)}")
     trajectory_id = next(iter(trajectory_ids))
 
     mesh_pos = first_sample.mesh_pos.detach().cpu().numpy().astype(np.float32)
-    directed_edge_index = (
-        first_sample.edge_index.detach().cpu().T.contiguous().numpy().astype(np.int32)
-    )
+    directed_edge_index = first_sample.edge_index.detach().cpu().T.contiguous().numpy().astype(np.int32)
     edge_attr = first_sample.edge_attr.detach().cpu().numpy().astype(np.float32)
-    face_nodes = (
-        first_sample.face.detach().cpu().T.contiguous().numpy().astype(np.int32)
-    )
+    face_nodes = first_sample.face.detach().cpu().T.contiguous().numpy().astype(np.int32)
 
     n_samples, n_nodes, history_length, n_input_features = input_x.shape
     n_future_steps = future_states.shape[2]
@@ -1016,13 +887,9 @@ def save_bundled_dataset_to_netcdf(
         n_future_steps,
         len(FORCING_FEATURE_INDICES),
     ):
-        raise ValueError(
-            f"Unexpected future_forcings shape: {future_forcings.shape}"
-        )
+        raise ValueError(f"Unexpected future_forcings shape: {future_forcings.shape}")
 
-    edge_nodes = np.unique(
-        np.sort(directed_edge_index, axis=1), axis=0
-    ).astype(np.int32, copy=False)
+    edge_nodes = np.unique(np.sort(directed_edge_index, axis=1), axis=0).astype(np.int32, copy=False)
     original_node_index = _derive_original_node_indices(filter_info, n_nodes)
     past_steps = history_length - 1
     selected_names = [FEATURE_NAMES[index] for index in selected_features_x]
@@ -1061,28 +928,19 @@ def save_bundled_dataset_to_netcdf(
             "node": np.arange(n_nodes, dtype=np.int32),
             "history": np.arange(-past_steps, 1, dtype=np.int32),
             "input_feature": np.arange(n_input_features, dtype=np.int32),
-            "target_feature": np.arange(
-                len(TARGET_FEATURE_INDICES), dtype=np.int32
-            ),
-            "forcing_feature": np.arange(
-                len(FORCING_FEATURE_INDICES), dtype=np.int32
-            ),
+            "target_feature": np.arange(len(TARGET_FEATURE_INDICES), dtype=np.int32),
+            "forcing_feature": np.arange(len(FORCING_FEATURE_INDICES), dtype=np.int32),
             "future_step": np.arange(1, n_future_steps + 1, dtype=np.int32),
             "face": np.arange(face_nodes.shape[0], dtype=np.int32),
             "face_vertex": np.arange(3, dtype=np.int32),
             "mesh_edge": np.arange(edge_nodes.shape[0], dtype=np.int32),
-            "directed_edge": np.arange(
-                directed_edge_index.shape[0], dtype=np.int32
-            ),
+            "directed_edge": np.arange(directed_edge_index.shape[0], dtype=np.int32),
             "edge_endpoint": np.arange(2, dtype=np.int32),
             "edge_feature": np.arange(edge_attr.shape[1], dtype=np.int32),
         },
         attrs={
             "title": "Processed WAVI graph trajectory for IceGraph",
-            "summary": (
-                "Temporally bundled WAVI fields on a trajectory-wide filtered "
-                "and Delaunay-remeshed graph."
-            ),
+            "summary": ("Temporally bundled WAVI fields on a trajectory-wide filtered and Delaunay-remeshed graph."),
             "source": "WAVI.jl .jld2 timestep files",
             "Conventions": "CF-1.12 UGRID-1.0",
             "trajectory_id": trajectory_id,
@@ -1118,9 +976,7 @@ def save_bundled_dataset_to_netcdf(
         long_name="future prescribed accumulation and basal melt",
         feature_names="forcing_feature_names_json global attribute",
     )
-    dataset["model_time"].attrs.update(
-        long_name="model time since trajectory start", units=str(time_units)
-    )
+    dataset["model_time"].attrs.update(long_name="model time since trajectory start", units=str(time_units))
     dataset["mesh_x"].attrs.update(
         standard_name="projection_x_coordinate",
         long_name="retained mesh node x coordinate",
@@ -1162,9 +1018,7 @@ def save_bundled_dataset_to_netcdf(
             for name, variable in dataset.data_vars.items()
             if variable.ndim > 0 and variable.dtype.kind in {"f", "i", "u"}
         }
-    dataset.to_netcdf(
-        output_path, mode="w", engine=engine, encoding=encoding
-    )
+    dataset.to_netcdf(output_path, mode="w", engine=engine, encoding=encoding)
     return dataset
 
 
@@ -1210,26 +1064,14 @@ def load_netcdf_as_pyg(
 
     input_x = torch.from_numpy(np.asarray(dataset["x"].values, dtype=np.float32))
     target_y = torch.from_numpy(np.asarray(dataset["y"].values, dtype=np.float32))
-    future_states = torch.from_numpy(
-        np.asarray(dataset["future_states"].values, dtype=np.float32)
-    )
-    future_forcings = torch.from_numpy(
-        np.asarray(dataset["future_forcings"].values, dtype=np.float32)
-    )
+    future_states = torch.from_numpy(np.asarray(dataset["future_states"].values, dtype=np.float32))
+    future_forcings = torch.from_numpy(np.asarray(dataset["future_forcings"].values, dtype=np.float32))
     mesh_pos = torch.from_numpy(
-        np.column_stack(
-            [dataset["mesh_x"].values, dataset["mesh_y"].values]
-        ).astype(np.float32, copy=False)
+        np.column_stack([dataset["mesh_x"].values, dataset["mesh_y"].values]).astype(np.float32, copy=False)
     )
-    edge_index = torch.from_numpy(
-        np.asarray(dataset["directed_edge_index"].values, dtype=np.int64)
-    ).T.contiguous()
-    edge_attr = torch.from_numpy(
-        np.asarray(dataset["edge_attr"].values, dtype=np.float32)
-    )
-    face = torch.from_numpy(
-        np.asarray(dataset["face_nodes"].values, dtype=np.int64)
-    ).T.contiguous()
+    edge_index = torch.from_numpy(np.asarray(dataset["directed_edge_index"].values, dtype=np.int64)).T.contiguous()
+    edge_attr = torch.from_numpy(np.asarray(dataset["edge_attr"].values, dtype=np.float32))
+    face = torch.from_numpy(np.asarray(dataset["face_nodes"].values, dtype=np.int64)).T.contiguous()
     time_indices = np.asarray(dataset["time_index"].values, dtype=np.int64)
     trajectory_id = str(dataset.attrs.get("trajectory_id", netcdf_path.stem))
 
@@ -1251,15 +1093,9 @@ def load_netcdf_as_pyg(
 
     if return_metadata:
         metadata = dict(dataset.attrs)
-        metadata["filter_info"] = json.loads(
-            metadata.get("filter_info_json", "{}")
-        )
-        metadata["selected_feature_indices"] = json.loads(
-            metadata.get("selected_feature_indices_json", "[]")
-        )
-        metadata["selected_feature_names"] = json.loads(
-            metadata.get("selected_feature_names_json", "[]")
-        )
+        metadata["filter_info"] = json.loads(metadata.get("filter_info_json", "{}"))
+        metadata["selected_feature_indices"] = json.loads(metadata.get("selected_feature_indices_json", "[]"))
+        metadata["selected_feature_names"] = json.loads(metadata.get("selected_feature_names_json", "[]"))
         return bundled_dataset, metadata
     else:
         return bundled_dataset
@@ -1286,12 +1122,8 @@ def _output_filename(model_config: Any, simulation: str) -> str:
     stem = simulation
     if prefix and not simulation.startswith(f"{prefix}_"):
         stem = f"{prefix}_{simulation}"
-    past_steps = int(
-        _setting(model_config, "history_size", "past_steps", default=0)
-    )
-    future_steps = int(
-        _setting(model_config, "future_size", "future_steps", default=0)
-    )
+    past_steps = int(_setting(model_config, "history_size", "past_steps", default=0))
+    future_steps = int(_setting(model_config, "future_size", "future_steps", default=0))
     return f"{stem}_past{past_steps}_fut{future_steps}.nc"
 
 
@@ -1321,17 +1153,13 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         "mesh_trajectories_subdir",
     )
     if input_subdir is None or output_subdir is None:
-        raise AttributeError(
-            "Data configuration requires wavi_trajectories_subdir and mesh_subdir"
-        )
+        raise AttributeError("Data configuration requires wavi_trajectories_subdir and mesh_subdir")
 
     wavi_dir = root_dir / input_subdir
     if not wavi_dir.is_dir():
         raise NotADirectoryError(f"WAVI trajectory directory does not exist:\n{wavi_dir}")
     simulations = (
-        sorted(path.name for path in wavi_dir.iterdir() if path.is_dir())
-        if not wavi_simulation
-        else [wavi_simulation]
+        sorted(path.name for path in wavi_dir.iterdir() if path.is_dir()) if not wavi_simulation else [wavi_simulation]
     )
     if not simulations:
         raise ValueError(f"No simulation folders found in:\n{wavi_dir}")
@@ -1348,9 +1176,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         bool(_setting(model_config, "use_node_types", default=False)),
     )
     dt = float(_setting(model_config, "delta_time", "dt", default=1.0))
-    coordinate_units = str(
-        _setting(model_config, "coordinate_units", default="m")
-    )
+    coordinate_units = str(_setting(model_config, "coordinate_units", default="m"))
     time_units = str(_setting(model_config, "time_units", default="years"))
     output_paths: list[Path] = []
     summaries: list[dict[str, Any]] = []
@@ -1358,9 +1184,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
     for simulation in tqdm(simulations, desc="Processing datasets", unit="sim"):
         simulation_dir = wavi_dir / simulation
         if not simulation_dir.is_dir():
-            raise NotADirectoryError(
-                f"Simulation directory does not exist:\n{simulation_dir}"
-            )
+            raise NotADirectoryError(f"Simulation directory does not exist:\n{simulation_dir}")
         output_path = output_dir / _output_filename(model_config, simulation)
         output_paths.append(output_path)
         if output_path.exists() and not overwrite:
@@ -1404,14 +1228,8 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
     print(f"Skipped existing trajectories: {skipped}")
     if summaries:
         print(f"Total graph samples saved: {sum(item['samples'] for item in summaries)}")
-        print(
-            "Total retained nodes across trajectories: "
-            f"{sum(item['kept_nodes'] for item in summaries)}"
-        )
-        print(
-            "Total nodes removed across trajectories: "
-            f"{sum(item['removed_nodes'] for item in summaries)}"
-        )
+        print(f"Total retained nodes across trajectories: {sum(item['kept_nodes'] for item in summaries)}")
+        print(f"Total nodes removed across trajectories: {sum(item['removed_nodes'] for item in summaries)}")
     return output_paths
 
 
@@ -1430,15 +1248,11 @@ def read_netcdf_file(config: Config, mesh_filename: str):
     """
     data_config = _config_section(config, "data", "directories")
     root_dir = Path(_setting(data_config, "root_dir"))
-    output_subdir = _setting(
-        data_config, "mesh_subdir", "mesh_trajectories_subdir"
-    )
+    output_subdir = _setting(data_config, "mesh_subdir", "mesh_trajectories_subdir")
     load_path = root_dir / output_subdir / mesh_filename
 
     if load_path.suffix.lower() == ".nc":
-        loaded_dataset, metadata = load_netcdf_as_pyg(
-            load_path, return_metadata=True
-        )
+        loaded_dataset, metadata = load_netcdf_as_pyg(load_path, return_metadata=True)
         print(f"Loaded {len(loaded_dataset)} samples.")
         print("First sample:")
         print(loaded_dataset[0])
