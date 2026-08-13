@@ -25,7 +25,7 @@ def compare_output(test_path: Path, gt_path: Path) -> None:
     assert test_path.exists(), f"Generated dataset not found: {test_path}"
     assert gt_path.exists(), f"Reference dataset not found: {gt_path}"
 
-    # Compare the contents rather than the raw NetCDF file bytes.
+    # Compare the contents of two NetCDF files.
     with (
         xr.open_dataset(test_path) as result,
         xr.open_dataset(gt_path) as reference,
