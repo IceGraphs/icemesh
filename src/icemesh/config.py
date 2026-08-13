@@ -4,19 +4,22 @@ from pathlib import Path
 import yaml
 from pydantic import BaseModel
 
+
 class DataConfig(BaseModel):
     root_dir: Path = "."  # All other data paths are relative to this root directory.
+
+    # Regular grid.
     wavi_trajectories_subdir: Path = "WAVI_simulations/trajectories"
     wavi_checkpoints_subdir: Path = "WAVI_simulations/checkpoints"
+    
+    # Irregular mesh.
     mesh_subdir: Path = "preprocessed_datasets"
     mesh_gt_subdir: Path = "preprocessed_datasets"
 
 
 class ModelConfig(BaseModel):
     delta_time: float = 1.0  # Time delta between files used for finite-difference targets.   #TODO(tvl) rem Note: 'dt' in orig notebooks.
-    history_size: int = (
-        0  # Additional timesteps besides current to include in input.   #TODO(tvl) rem Note: 'k' in original notebooks.
-    )
+    history_size: int = 0  # Additional timesteps besides current to include in input.   #TODO(tvl) rem Note: 'k' in original notebooks.
     future_size: int = 0
     use_node_types: bool = False
     num_node_types: int = 3
