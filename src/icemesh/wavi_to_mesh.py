@@ -37,69 +37,7 @@ from tqdm import tqdm
 from icemesh.config import Config
 
 
-# Stable complete-feature convention before model-specific selection
-FEATURE_NAMES = {
-    0: "u",
-    1: "v",
-    2: "us",
-    3: "vs",
-    4: "ub",
-    5: "vb",
-    6: "h",
-    7: "b",
-    8: "s",
-    9: "dhdt",
-    10: "accumulation",
-    11: "basal_melt",
-    12: "grounded_frac",
-    13: "av_speed",
-    14: "bed_speed",
-    15: "weertman_c",
-    16: "haf",
-    17: "dsdh",
-    18: "shelf_strain",
-    19: "beta",
-    20: "beta_eff",
-    21: "tau_bed",
-    22: "eta_av",
-    23: "quad_f1",
-    24: "quad_f2",
-    25: "mask",
-    26: "param_smb",
-    27: "param_gt",
-    28: "param_dt",
-    29: "node_type_interior",
-    30: "node_type_free_slip",
-    31: "node_type_left_no_slip",
-    32: "mesh_boundary",
-}
-
-# Fixed prediction targets and prescribed rollout forcing fields
-TARGET_FEATURE_INDICES = [0, 1, 6]
-TARGET_FEATURE_NAMES = ["u", "v", "h"]
-FORCING_FEATURE_INDICES = [10, 11]
-FORCING_FEATURE_NAMES = ["accumulation", "basal_melt"]
-THICKNESS_FEATURE_INDEX = 6
-MESH_BOUNDARY_FEATURE_INDEX = 32
-
-# Default model input when no explicit selection is provided
-DEFAULT_SELECTED_FEATURES = [
-    0,
-    1,
-    6,
-    7,
-    8,
-    10,
-    11,
-    16,
-    29,
-    30,
-    31,
-    32,
-]
-
-
-def _config_section(config: Any, *names: str) -> Any:
+def _config_section(config: Config, *names: str) -> Any:
     """Return the first available named section from a configuration object.
 
     The aliases retain compatibility with older configurations that used
@@ -177,19 +115,19 @@ def _validate_selected_features(
     return selected
 
 
-def _print_selected_features(selected_features_x: Sequence[int]) -> None:
+def _print_selected_features(netcdf_config: Any, selected_features_x: Sequence[int]) -> None:
     """Print input, target and forcing feature conventions for inspection."""
     print("\nSelected input features for x:")
     for new_index, original_index in enumerate(selected_features_x):
-        print(f"  x[{new_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
+        print(f"  x[{new_index}] = original feature {original_index}: {netcdf_config.feature_names[original_index]}")
 
     print("\nFixed targets for y and future_states:")
-    for target_index, original_index in enumerate(TARGET_FEATURE_INDICES):
-        print(f"  target[{target_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
+    for target_index, original_index in enumerate(netcdf_config.target_feature_indices):
+        print(f"  target[{target_index}] = original feature {original_index}: {netcdf_config.feature_names[original_index]}")
 
     print("\nFuture prescribed forcing fields:")
-    for forcing_index, original_index in enumerate(FORCING_FEATURE_INDICES):
-        print(f"  forcing[{forcing_index}] = original feature {original_index}: {FEATURE_NAMES[original_index]}")
+    for forcing_index, original_index in enumerate(netcdf_config.forcing_feature_indices):
+        print(f"  forcing[{forcing_index}] = original feature {original_index}: {netcdf_config.feature_names[original_index]}")
 
 
 def _grid_to_mesh(
@@ -200,7 +138,7 @@ def _grid_to_mesh(
     """Convert one WAVI grid snapshot to coordinates and complete features.
 
     Physical fields are flattened in the stable order defined by
-    ``FEATURE_NAMES``. When node types are enabled, three one-hot physical
+    ``netcdf_config.feature_names``. When node types are enabled, three one-hot physical
     boundary channels are appended as indices 29 to 31. The reconstructed mesh
     boundary is added later because it is only known after filtering and
     remeshing.
@@ -218,7 +156,7 @@ def _grid_to_mesh(
     y_coords = jld2_file["y"][:, 0]
     x_grid, y_grid = np.meshgrid(x_coords, y_coords)
     mesh_pos = np.column_stack([x_grid.ravel(), y_grid.ravel()])
-
+    
     u = jld2_file["u"][:, :]
     use_node_types = bool(_setting(model_config, "use_node_types", default=False))
 
@@ -301,6 +239,7 @@ def _grid_to_mesh(
 
 
 def _find_nodes_reaching_thickness_value(
+    netcdf_config: Any,
     all_feature_snapshots: Sequence[torch.Tensor],
     thickness_value: float | None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -323,7 +262,7 @@ def _find_nodes_reaching_thickness_value(
         return remove_mask, first_hit_timestep
 
     for timestep, features in enumerate(all_feature_snapshots):
-        hit = (features[:, THICKNESS_FEATURE_INDEX] == thickness_value).detach().cpu()
+        hit = (features[:, netcdf_config.thickness_feature_index] == thickness_value).detach().cpu()
         newly_detected = hit & ~remove_mask
         first_hit_timestep[newly_detected] = timestep
         remove_mask |= hit
@@ -459,6 +398,7 @@ def _build_mesh_boundary_feature(face: torch.Tensor, num_nodes: int) -> torch.Te
 
 
 def _build_bundled_dataset(
+    netcdf_config: Any,
     model_config: Any,
     simulation_dir: Path,
     trajectory_id: str | None = None,
@@ -502,7 +442,7 @@ def _build_bundled_dataset(
     selected_features_x = _setting(
         model_config,
         "selected_features_x",
-        default=DEFAULT_SELECTED_FEATURES,
+        default=netcdf_config.default_selected_features,
     )
     selected_features_x = _validate_selected_features(selected_features_x, use_node_types)
 
@@ -522,7 +462,7 @@ def _build_bundled_dataset(
     if trajectory_id is None:
         trajectory_id = simulation_dir.name
     if print_filter_summary:
-        _print_selected_features(selected_features_x)
+        _print_selected_features(netcdf_config, selected_features_x)
 
     files = sorted(
         [path for path in simulation_dir.iterdir() if path.is_file() and path.suffix.lower() == ".jld2"],
@@ -576,10 +516,11 @@ def _build_bundled_dataset(
 
     assert reference_mesh_pos is not None
     minimum_original_thickness = min(
-        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
+        float(features[:, netcdf_config.thickness_feature_index].min().item()) for features in all_feature_snapshots
     )
 
     remove_mask, first_hit_timestep = _find_nodes_reaching_thickness_value(
+        netcdf_config,
         all_feature_snapshots,
         filter_thickness,
     )
@@ -649,8 +590,8 @@ def _build_bundled_dataset(
         print(f"Remeshed boundary nodes: {n_mesh_boundary_nodes}")
 
     selected_tensor = torch.as_tensor(selected_features_x, dtype=torch.long)
-    target_tensor = torch.as_tensor(TARGET_FEATURE_INDICES, dtype=torch.long)
-    forcing_tensor = torch.as_tensor(FORCING_FEATURE_INDICES, dtype=torch.long)
+    target_tensor = torch.as_tensor(netcdf_config.target_feature_indices, dtype=torch.long)
+    forcing_tensor = torch.as_tensor(netcdf_config.forcing_feature_indices, dtype=torch.long)
     bundled_dataset: list[Data] = []
     required_future_steps = max(1, future_steps)
 
@@ -683,11 +624,11 @@ def _build_bundled_dataset(
             ).float()
         else:
             future_states = torch.empty(
-                (n_kept_nodes, 0, len(TARGET_FEATURE_INDICES)),
+                (n_kept_nodes, 0, len(netcdf_config.target_feature_indices)),
                 dtype=torch.float32,
             )
             future_forcings = torch.empty(
-                (n_kept_nodes, 0, len(FORCING_FEATURE_INDICES)),
+                (n_kept_nodes, 0, len(netcdf_config.forcing_feature_indices)),
                 dtype=torch.float32,
             )
 
@@ -772,6 +713,7 @@ def _derive_original_node_indices(
 
 
 def _save_bundled_dataset_to_netcdf(
+    netcdf_config: Any,
     bundled_dataset: Sequence[Data],
     output_path: str | Path,
     selected_features_x: Sequence[int],
@@ -851,27 +793,27 @@ def _save_bundled_dataset_to_netcdf(
     selected_features_x = [int(index) for index in selected_features_x]
     if len(selected_features_x) != n_input_features:
         raise ValueError("selected_features_x does not match stored x features")
-    if target_y.shape != (n_samples, n_nodes, len(TARGET_FEATURE_INDICES)):
+    if target_y.shape != (n_samples, n_nodes, len(netcdf_config.target_feature_indices)):
         raise ValueError(f"Unexpected y shape: {target_y.shape}")
     if future_states.shape != (
         n_samples,
         n_nodes,
         n_future_steps,
-        len(TARGET_FEATURE_INDICES),
+        len(netcdf_config.target_feature_indices),
     ):
         raise ValueError(f"Unexpected future_states shape: {future_states.shape}")
     if future_forcings.shape != (
         n_samples,
         n_nodes,
         n_future_steps,
-        len(FORCING_FEATURE_INDICES),
+        len(netcdf_config.forcing_feature_indices),
     ):
         raise ValueError(f"Unexpected future_forcings shape: {future_forcings.shape}")
 
     edge_nodes = np.unique(np.sort(directed_edge_index, axis=1), axis=0).astype(np.int32, copy=False)
     original_node_index = _derive_original_node_indices(filter_info, n_nodes)
     past_steps = history_length - 1
-    selected_names = [FEATURE_NAMES[index] for index in selected_features_x]
+    selected_names = [netcdf_config.feature_names[index] for index in selected_features_x]
 
     dataset = xr.Dataset(
         data_vars={
@@ -907,8 +849,8 @@ def _save_bundled_dataset_to_netcdf(
             "node": np.arange(n_nodes, dtype=np.int32),
             "history": np.arange(-past_steps, 1, dtype=np.int32),
             "input_feature": np.arange(n_input_features, dtype=np.int32),
-            "target_feature": np.arange(len(TARGET_FEATURE_INDICES), dtype=np.int32),
-            "forcing_feature": np.arange(len(FORCING_FEATURE_INDICES), dtype=np.int32),
+            "target_feature": np.arange(len(netcdf_config.target_feature_indices), dtype=np.int32),
+            "forcing_feature": np.arange(len(netcdf_config.forcing_feature_indices), dtype=np.int32),
             "future_step": np.arange(1, n_future_steps + 1, dtype=np.int32),
             "face": np.arange(face_nodes.shape[0], dtype=np.int32),
             "face_vertex": np.arange(3, dtype=np.int32),
@@ -931,10 +873,10 @@ def _save_bundled_dataset_to_netcdf(
             "future_steps": int(n_future_steps),
             "selected_feature_indices_json": json.dumps(selected_features_x),
             "selected_feature_names_json": json.dumps(selected_names),
-            "target_feature_indices_json": json.dumps(TARGET_FEATURE_INDICES),
-            "target_feature_names_json": json.dumps(TARGET_FEATURE_NAMES),
-            "forcing_feature_indices_json": json.dumps(FORCING_FEATURE_INDICES),
-            "forcing_feature_names_json": json.dumps(FORCING_FEATURE_NAMES),
+            "target_feature_indices_json": json.dumps(netcdf_config.target_feature_indices),
+            "target_feature_names_json": json.dumps(netcdf_config.target_feature_names),
+            "forcing_feature_indices_json": json.dumps(netcdf_config.forcing_feature_indices),
+            "forcing_feature_names_json": json.dumps(netcdf_config.forcing_feature_names),
             "filter_info_json": json.dumps(_json_safe(filter_info or {})),
         },
     )
@@ -1108,6 +1050,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         existing files.
     """
     data_config = _config_section(config, "data", "directories")
+    netcdf_config = _config_section(config, "netcdf", "settings") 
     model_config = _config_section(config, "model", "settings")
     root_dir = Path(_setting(data_config, "root_dir"))
     input_subdir = _setting(data_config, "wavi_trajectories_subdir")
@@ -1135,7 +1078,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         _setting(
             model_config,
             "selected_features_x",
-            default=DEFAULT_SELECTED_FEATURES,
+            default=netcdf_config.default_selected_features,
         ),
         bool(_setting(model_config, "use_node_types", default=False)),
     )
@@ -1156,6 +1099,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
             continue
 
         dataset, filter_info = _build_bundled_dataset(
+            netcdf_config=netcdf_config,
             model_config=model_config,
             simulation_dir=simulation_dir,
             trajectory_id=output_path.stem,
@@ -1165,6 +1109,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         if not dataset:
             raise ValueError(f"Constructed dataset is empty for:\n{simulation_dir}")
         _save_bundled_dataset_to_netcdf(
+            netcdf_config=netcdf_config,
             bundled_dataset=dataset,
             output_path=output_path,
             selected_features_x=selected_features,
@@ -1198,6 +1143,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
 
 
 def determine_automatic_thickness_value(
+    netcdf_config: Any,
     all_feature_snapshots: Sequence[torch.Tensor],
     maximum_value: float = 100.0,
 ) -> tuple[float, float | None]:
@@ -1210,7 +1156,7 @@ def determine_automatic_thickness_value(
         raise ValueError("No feature snapshots were provided")
 
     minimum_thickness = min(
-        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
+        float(features[:, netcdf_config.thickness_feature_index].min().item()) for features in all_feature_snapshots
     )
     use_for_filtering = (
         np.isfinite(minimum_thickness) and minimum_thickness.is_integer() and minimum_thickness <= maximum_value

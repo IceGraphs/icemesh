@@ -17,6 +17,56 @@ class DataConfig(BaseModel):
     mesh_gt_subdir: Path = "preprocessed_datasets"
 
 
+class NetcdfConfig(BaseModel):
+    # Stable complete-feature convention before model-specific selection
+    feature_names: dict = [
+        "u",
+        "v",
+        "us",
+        "vs",
+        "ub",
+        "vb",
+        "h",
+        "b",
+        "s",
+        "dhdt",
+        "accumulation",
+        "basal_melt",
+        "grounded_frac",
+        "av_speed",
+        "bed_speed",
+        "weertman_c",
+        "haf",
+        "dsdh",
+        "shelf_strain",
+        "beta",
+        "beta_eff",
+        "tau_bed",
+        "eta_av",
+        "quad_f1",
+        "quad_f2",
+        "mask",
+        "param_smb",
+        "param_gt",
+        "param_dt",
+        "node_type_interior",
+        "node_type_free_slip",
+        "node_type_left_no_slip",
+        "mesh_boundary",
+    ]
+
+    # Fixed prediction targets and prescribed rollout forcing fields
+    target_feature_indices = [0, 1, 6]
+    target_feature_names = ["u", "v", "h"]
+    forcing_feature_indices = [10, 11]
+    forcing_feature_names = ["accumulation", "basal_melt"]
+    thickness_feature_index = 6
+    mesh_boundary_feature_index = 32
+
+    # Default model input when no explicit selection is provided
+    default_selected_features = [0, 1, 6, 7, 8, 10, 11, 16, 29, 30, 31, 32]
+
+
 class ModelConfig(BaseModel):
     delta_time: float = 1.0  # Time delta between files used for finite-difference targets.   #TODO(tvl) rem Note: 'dt' in orig notebooks.
     history_size: int = (
@@ -41,6 +91,7 @@ class Config(BaseModel):
     """Class for icemesh configuration parameters."""
 
     data: DataConfig = DataConfig()
+    netcdf: NetcdfConfig = NetcdfConfig()
     model: ModelConfig = ModelConfig()
 
     @classmethod
