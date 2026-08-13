@@ -109,6 +109,4 @@ def test_read_netcdf_file(config: Config, wavi_simulation: str) -> None:
 
     # read_netcdf_file expects a filename relative to mesh_subdir.
     dataset = read_netcdf_file(config, output_paths[0].name)
-
     assert dataset is not None
-    dataset.close()
