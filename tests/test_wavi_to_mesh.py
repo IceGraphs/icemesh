@@ -20,12 +20,19 @@ def wavi_simulation() -> str:
     return "rwnr_from_SMB0.30_gT1.00e-03__T100_traj001"
 
 
-def delete_output(config: Config, wavi_simulation: str):
+def delete_output(config: Config, wavi_simulation: str = ""):
     # Converting WAVI to mesh files will skip files that already exist.
     # Delete this output to force the functions to run.
-    mesh_path = config.data.root_dir / config.data.mesh_subdir / f"{wavi_simulation}.pt"
-    if mesh_path.exists():
-        mesh_path.unlink()
+    mesh_dir = config.data.root_dir / config.data.mesh_subdir
+    if wavi_simulation:
+        mesh_path = mesh_dir / f"{wavi_simulation}.pt"
+        if mesh_path.exists():
+            mesh_path.unlink()
+    else:
+        mesh_glob = "*"
+        if mesh_dir.exists():
+            for mesh_path in mesh_dir.glob(mesh_glob):
+                mesh_path.unlink()
 
 
 def compare_output(test_path: Path, gt_path: Path) -> None:
@@ -54,15 +61,13 @@ def test_one_simulation(config: Config, wavi_simulation: str) -> None:
     output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
 
+    # Compare the generated file to the reference file with the same name.
     mesh_path = output_paths[0]
-
-    # The reference file must have the same filename as the generated file.
     mesh_gt_path = (
         config.data.root_dir
         / config.data.mesh_gt_subdir
         / mesh_path.name
     )
-
     compare_output(mesh_path, mesh_gt_path)
 
 
@@ -70,24 +75,31 @@ def test_one_simulation_node_types(config: Config, wavi_simulation: str) -> None
     """Convert and validate one simulation with node-type features."""
     config.model.use_node_types = True
 
+    # Clean up existing output.    
+    delete_output(config, wavi_simulation)
+
     # Use a separate filename to avoid overwriting the output without node types.
     config.model.file_prefix = "8km_node_types"
 
     output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
 
+    # Compare the generated file to the reference file with the same name.
     mesh_path = output_paths[0]
     mesh_gt_path = (
         config.data.root_dir
         / config.data.mesh_gt_subdir
         / mesh_path.name
     )
-
     compare_output(mesh_path, mesh_gt_path)
 
 
 def test_multi_simulation(config: Config) -> None:
     """Convert all available simulations and validate their outputs."""
+
+    # Clean up existing output.    
+    delete_output(config)
+
     output_paths = wavi_to_mesh(config)
 
     assert output_paths, "No output datasets were generated."
