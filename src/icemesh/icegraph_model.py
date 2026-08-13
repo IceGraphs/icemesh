@@ -1,9 +1,8 @@
 """IceGraph model, with training and testing functionality."""
 
-
 import numpy as np
 import os
-from pathlib import Path 
+from pathlib import Path
 import random
 import time
 import torch
@@ -17,10 +16,8 @@ from tqdm import trange, tqdm
 import warnings
 
 
-
-#TODO(tvl) temp imports?
+# TODO(tvl) temp imports?
 from icemesh import Config
-
 
 
 # What notebook does (broad strokes):
@@ -71,16 +68,11 @@ from icemesh import Config
 # for preparing, training, checking, rollout
 
 
-
-
 # Things to keep track of:
 # * replace args by config
 # * replace strings by enumerators where possible
 # * try to put model params in file (header) instead of in filename
 
 
-
 config = Config.from_yaml("tests/icegraph_model_config.yaml")
 root_dir = config.data.root_dir
-
-
