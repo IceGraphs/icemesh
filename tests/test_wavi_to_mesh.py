@@ -20,22 +20,36 @@ def wavi_simulation() -> str:
     return "rwnr_from_SMB0.30_gT1.00e-03__T100_traj001"
 
 
+def delete_output(config: Config, wavi_simulation: str):
+    # Converting WAVI to mesh files will skip files that already exist.
+    # Delete this output to force the functions to run.
+    mesh_path = config.data.root_dir / config.data.mesh_subdir / f"{wavi_simulation}.pt"
+    if mesh_path.exists():
+        mesh_path.unlink()
+
+
 def compare_output(test_path: Path, gt_path: Path) -> None:
     """Compare a generated NetCDF dataset with its reference dataset."""
     assert test_path.exists(), f"Generated dataset not found: {test_path}"
     assert gt_path.exists(), f"Reference dataset not found: {gt_path}"
 
     # Compare the contents of two NetCDF files.
+    opened = False
     with (
         xr.open_dataset(test_path) as result,
         xr.open_dataset(gt_path) as reference,
     ):
+        opened = True
         xr.testing.assert_allclose(result, reference)
+    assert opened, f"Failed to open generated or reference dataset: {test_path}, {gt_path}"
 
 
 def test_one_simulation(config: Config, wavi_simulation: str) -> None:
     """Convert and validate one simulation without node-type features."""
     config.model.use_node_types = False
+
+    # Clean up existing output.    
+    delete_output(config, wavi_simulation)
 
     output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
