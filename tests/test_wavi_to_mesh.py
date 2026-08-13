@@ -11,19 +11,7 @@ from icemesh import Config, read_netcdf_file, wavi_to_mesh
 @pytest.fixture
 def config() -> Config:
     """Load the test configuration and verify that external data is available."""
-    test_config = Config.from_yaml("tests/wavi_to_mesh_config.yaml")
-
-    # The WAVI trajectories are stored locally and are not included in GitHub.
-    wavi_dir = (
-        test_config.data.root_dir
-        / test_config.data.wavi_trajectories_subdir
-    )
-
-    # Skip these integration tests on systems without the external WAVI data.
-    if not wavi_dir.is_dir():
-        pytest.skip(f"External WAVI test data is unavailable: {wavi_dir}")
-
-    return test_config
+    return Config.from_yaml("tests/wavi_to_mesh_config.yaml")
 
 
 @pytest.fixture
