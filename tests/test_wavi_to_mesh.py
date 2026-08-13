@@ -7,9 +7,6 @@ import xarray as xr
 
 from icemesh import Config, read_netcdf_file, wavi_to_mesh
 
-# A single known WAVI simulation used by the individual conversion tests.
-SIMULATION = "rwnr_from_SMB0.30_gT1.00e-03__T100_traj001"
-
 
 @pytest.fixture
 def config() -> Config:
@@ -29,6 +26,12 @@ def config() -> Config:
     return test_config
 
 
+@pytest.fixture
+def wavi_simulation() -> str:
+    # A single known WAVI simulation used by the individual conversion tests.
+    return "rwnr_from_SMB0.30_gT1.00e-03__T100_traj001"
+
+
 def compare_output(test_path: Path, gt_path: Path) -> None:
     """Compare a generated NetCDF dataset with its reference dataset."""
     assert test_path.exists(), f"Generated dataset not found: {test_path}"
@@ -42,11 +45,11 @@ def compare_output(test_path: Path, gt_path: Path) -> None:
         xr.testing.assert_allclose(result, reference)
 
 
-def test_one_simulation(config: Config) -> None:
+def test_one_simulation(config: Config, wavi_simulation: str) -> None:
     """Convert and validate one simulation without node-type features."""
     config.model.use_node_types = False
 
-    output_paths = wavi_to_mesh(config, SIMULATION)
+    output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
 
     mesh_path = output_paths[0]
@@ -61,14 +64,14 @@ def test_one_simulation(config: Config) -> None:
     compare_output(mesh_path, mesh_gt_path)
 
 
-def test_one_simulation_node_types(config: Config) -> None:
+def test_one_simulation_node_types(config: Config, wavi_simulation: str) -> None:
     """Convert and validate one simulation with node-type features."""
     config.model.use_node_types = True
 
     # Use a separate filename to avoid overwriting the output without node types.
     config.model.file_prefix = "8km_node_types"
 
-    output_paths = wavi_to_mesh(config, SIMULATION)
+    output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
 
     mesh_path = output_paths[0]
@@ -97,9 +100,9 @@ def test_multi_simulation(config: Config) -> None:
         compare_output(mesh_path, mesh_gt_path)
 
 
-def test_read_netcdf_file(config: Config) -> None:
+def test_read_netcdf_file(config: Config, wavi_simulation: str) -> None:
     """Verify that a generated NetCDF dataset can be read."""
-    output_paths = wavi_to_mesh(config, SIMULATION)
+    output_paths = wavi_to_mesh(config, wavi_simulation)
     assert output_paths, "No output dataset was generated."
 
     # read_netcdf_file expects a filename relative to mesh_subdir.
