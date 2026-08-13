@@ -120,7 +120,7 @@ def _setting(section: Any, *names: str, default: Any = None) -> Any:
     return default
 
 
-def natural_sort_key(path: Path) -> list[Any]:
+def _natural_sort_key(path: Path) -> list[Any]:
     """Create a key that sorts numbered timestep files chronologically.
 
     Numeric filename fragments are compared as integers, so timestep 10 sorts
@@ -129,7 +129,7 @@ def natural_sort_key(path: Path) -> list[Any]:
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]
 
 
-def validate_selected_features(
+def _validate_selected_features(
     selected_features_x: Sequence[int],
     use_node_types: bool,
 ) -> list[int]:
@@ -177,7 +177,7 @@ def validate_selected_features(
     return selected
 
 
-def print_selected_features(selected_features_x: Sequence[int]) -> None:
+def _print_selected_features(selected_features_x: Sequence[int]) -> None:
     """Print input, target and forcing feature conventions for inspection."""
     print("\nSelected input features for x:")
     for new_index, original_index in enumerate(selected_features_x):
@@ -300,28 +300,7 @@ def _grid_to_mesh(
     return mesh_pos, torch.cat(feature_tensors, dim=-1).float()
 
 
-def determine_automatic_thickness_value(
-    all_feature_snapshots: Sequence[torch.Tensor],
-    maximum_value: float = 100.0,
-) -> tuple[float, float | None]:
-    """Detect an integer-valued numerical thickness floor.
-
-    This compatibility helper is not used by the configured preprocessing
-    pipeline, which filters with ``model.minimum_thickness`` directly.
-    """
-    if not all_feature_snapshots:
-        raise ValueError("No feature snapshots were provided")
-
-    minimum_thickness = min(
-        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
-    )
-    use_for_filtering = (
-        np.isfinite(minimum_thickness) and minimum_thickness.is_integer() and minimum_thickness <= maximum_value
-    )
-    return minimum_thickness, minimum_thickness if use_for_filtering else None
-
-
-def find_nodes_reaching_thickness_value(
+def _find_nodes_reaching_thickness_value(
     all_feature_snapshots: Sequence[torch.Tensor],
     thickness_value: float | None,
 ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -351,7 +330,7 @@ def find_nodes_reaching_thickness_value(
     return remove_mask, first_hit_timestep
 
 
-def estimate_mesh_spacing(mesh_pos: torch.Tensor) -> float:
+def _estimate_mesh_spacing(mesh_pos: torch.Tensor) -> float:
     """Estimate regular-grid spacing from median nearest-neighbor distance."""
     positions = mesh_pos[:, :2].detach().cpu().numpy()
     if positions.shape[0] < 2:
@@ -525,7 +504,7 @@ def _build_bundled_dataset(
         "selected_features_x",
         default=DEFAULT_SELECTED_FEATURES,
     )
-    selected_features_x = validate_selected_features(selected_features_x, use_node_types)
+    selected_features_x = _validate_selected_features(selected_features_x, use_node_types)
 
     if past_steps < 0 or future_steps < 0:
         raise ValueError("history_size and future_size must be non-negative")
@@ -543,11 +522,11 @@ def _build_bundled_dataset(
     if trajectory_id is None:
         trajectory_id = simulation_dir.name
     if print_filter_summary:
-        print_selected_features(selected_features_x)
+        _print_selected_features(selected_features_x)
 
     files = sorted(
         [path for path in simulation_dir.iterdir() if path.is_file() and path.suffix.lower() == ".jld2"],
-        key=natural_sort_key,
+        key=_natural_sort_key,
     )
     if not files:
         raise ValueError(f"No .jld2 files found in:\n{simulation_dir}")
@@ -600,7 +579,7 @@ def _build_bundled_dataset(
         float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
     )
 
-    remove_mask, first_hit_timestep = find_nodes_reaching_thickness_value(
+    remove_mask, first_hit_timestep = _find_nodes_reaching_thickness_value(
         all_feature_snapshots,
         filter_thickness,
     )
@@ -614,7 +593,7 @@ def _build_bundled_dataset(
 
     filtered_snapshots = [features.index_select(0, keep_indices) for features in all_feature_snapshots]
     kept_mesh_pos = reference_mesh_pos.index_select(0, keep_indices)
-    mesh_spacing = estimate_mesh_spacing(reference_mesh_pos)
+    mesh_spacing = _estimate_mesh_spacing(reference_mesh_pos)
     maximum_edge_length = delaunay_edge_factor * mesh_spacing
     edge_index, edge_attr, face, n_isolated_nodes = _build_delaunay_topology(kept_mesh_pos, maximum_edge_length)
 
@@ -792,7 +771,7 @@ def _derive_original_node_indices(
     return result
 
 
-def save_bundled_dataset_to_netcdf(
+def _save_bundled_dataset_to_netcdf(
     bundled_dataset: Sequence[Data],
     output_path: str | Path,
     selected_features_x: Sequence[int],
@@ -1022,7 +1001,7 @@ def save_bundled_dataset_to_netcdf(
     return dataset
 
 
-def load_netcdf_as_pyg(
+def _load_netcdf_as_pyg(
     netcdf_path: str | Path,
     return_metadata: bool = False,
 ) -> list[Data] | tuple[list[Data], dict[str, Any]]:
@@ -1101,21 +1080,6 @@ def load_netcdf_as_pyg(
         return bundled_dataset
 
 
-def inspect_netcdf(netcdf_path: str | Path) -> None:
-    """Print structure, selected features and filtering metadata for a file."""
-    with xr.open_dataset(Path(netcdf_path)) as dataset:
-        print(dataset)
-        print("\nTrajectory ID:", dataset.attrs.get("trajectory_id"))
-        print(
-            "Selected features:",
-            json.loads(dataset.attrs.get("selected_feature_names_json", "[]")),
-        )
-        print(
-            "Filter information:",
-            json.loads(dataset.attrs.get("filter_info_json", "{}")),
-        )
-
-
 def _output_filename(model_config: Any, simulation: str) -> str:
     """Build a traceable filename from trajectory and temporal settings."""
     prefix = str(_setting(model_config, "file_prefix", default="")).strip("_")
@@ -1167,7 +1131,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
     output_dir = root_dir / output_subdir
     output_dir.mkdir(parents=True, exist_ok=True)
     overwrite = bool(_setting(model_config, "overwrite", default=False))
-    selected_features = validate_selected_features(
+    selected_features = _validate_selected_features(
         _setting(
             model_config,
             "selected_features_x",
@@ -1200,7 +1164,7 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
         )
         if not dataset:
             raise ValueError(f"Constructed dataset is empty for:\n{simulation_dir}")
-        save_bundled_dataset_to_netcdf(
+        _save_bundled_dataset_to_netcdf(
             bundled_dataset=dataset,
             output_path=output_path,
             selected_features_x=selected_features,
@@ -1233,11 +1197,47 @@ def wavi_to_mesh(config: Config, wavi_simulation: str = "") -> list[Path]:
     return output_paths
 
 
+def determine_automatic_thickness_value(
+    all_feature_snapshots: Sequence[torch.Tensor],
+    maximum_value: float = 100.0,
+) -> tuple[float, float | None]:
+    """Detect an integer-valued numerical thickness floor.
+
+    This compatibility helper is not used by the configured preprocessing
+    pipeline, which filters with ``model.minimum_thickness`` directly.
+    """
+    if not all_feature_snapshots:
+        raise ValueError("No feature snapshots were provided")
+
+    minimum_thickness = min(
+        float(features[:, THICKNESS_FEATURE_INDEX].min().item()) for features in all_feature_snapshots
+    )
+    use_for_filtering = (
+        np.isfinite(minimum_thickness) and minimum_thickness.is_integer() and minimum_thickness <= maximum_value
+    )
+    return minimum_thickness, minimum_thickness if use_for_filtering else None
+
+
+def inspect_netcdf(netcdf_path: str | Path) -> None:
+    """Print structure, selected features and filtering metadata for a file."""
+    with xr.open_dataset(Path(netcdf_path)) as dataset:
+        print(dataset)
+        print("\nTrajectory ID:", dataset.attrs.get("trajectory_id"))
+        print(
+            "Selected features:",
+            json.loads(dataset.attrs.get("selected_feature_names_json", "[]")),
+        )
+        print(
+            "Filter information:",
+            json.loads(dataset.attrs.get("filter_info_json", "{}")),
+        )
+
+
 def read_netcdf_file(config: Config, mesh_filename: str):
     """Load a processed NetCDF graph trajectory and print a compact summary.
 
     The NetCDF file is reconstructed as a list of PyTorch Geometric ``Data``
-    objects through ``load_netcdf_as_pyg``.
+    objects through ``_load_netcdf_as_pyg``.
 
     Args:
         config: Validated configuration used to locate the output directory.
@@ -1252,7 +1252,7 @@ def read_netcdf_file(config: Config, mesh_filename: str):
     load_path = root_dir / output_subdir / mesh_filename
 
     if load_path.suffix.lower() == ".nc":
-        loaded_dataset, metadata = load_netcdf_as_pyg(load_path, return_metadata=True)
+        loaded_dataset, metadata = _load_netcdf_as_pyg(load_path, return_metadata=True)
         print(f"Loaded {len(loaded_dataset)} samples.")
         print("First sample:")
         print(loaded_dataset[0])
