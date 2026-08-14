@@ -6,13 +6,13 @@ data:
   root_dir: C:/storage/IceGraph
 
   # Directory containing the raw WAVI test trajectories
-  wavi_trajectories_subdir: WAVI_simulations/8km_simulations/training_datasets/trajectories
+  wavi_trajectories_subdir: WAVI_simulations/8km_check/spinup_datasets/trajectories
 
   # Directory containing WAVI checkpoint files
-  wavi_checkpoints_subdir: WAVI_simulations/8km_simulations/training_datasets/checkpoints
+  wavi_checkpoints_subdir: WAVI_simulations/8km_check/spinup_datasets/checkpoints
 
   # Directory where processed trajectories are saved
-  mesh_subdir: preprocessed_datasets_test
+  mesh_subdir: preprocessed_datasets
 
   # Directory containing the reference processed datasets
   mesh_gt_subdir: preprocessed_datasets
@@ -23,16 +23,16 @@ model:
   delta_time: 1.0
 
   # Previous input timesteps included in addition to the current timestep
-  # A value of 2 produces input timesteps [t-2, t-1, t]
-  history_size: 2
+  # A value of 1 produces input timesteps [t-1, t]
+  history_size: 0
 
   # Future states and forcing timesteps stored for rollout training
   # A value of 2 stores timesteps [t+1, t+2]
-  future_size: 10
+  future_size: 0
 
 
   # Add physical node-type encodings and the reconstructed mesh boundary
-  use_node_types: false
+  use_node_types: true
 
   # Number of mutually exclusive physical node types
   # The mesh boundary remains a separate binary feature
@@ -60,16 +60,16 @@ model:
     - 31  # Left no-slip encoding
     - 32  # Reconstructed mesh-boundary encoding
 
-
-  # Remove a node from every timestep when it reaches this exact thickness
-  minimum_thickness: 50.0
+  # Remove nodes that reach minimum_thickness
+  use_thickness_filter: true
+  minimum_thickness: 1.0
 
   # Maximum accepted triangle-edge length relative to original mesh spacing
   # A value of 1.5 allows edges up to 1.5 times the estimated spacing
   delaunay_edge_factor: 1.5
 
   # Prefix added to generated NetCDF filenames
-  file_prefix: 8km
+  file_prefix: 8km_filter
 
 
   # Unit labels stored as NetCDF metadata

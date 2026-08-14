@@ -24,6 +24,7 @@ class ModelConfig(BaseModel):
     node_type_free_slip: int = 1
     node_type_left_no_slip: int = 2
     selected_features_x: list = []
+    use_thickness_filter: bool = True
     minimum_thickness: float = 50.0
     delaunay_edge_factor: float = 1.5
     file_prefix: str = ""
